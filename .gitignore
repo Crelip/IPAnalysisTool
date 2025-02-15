@@ -1,0 +1,10 @@
+# Conda environment
+env/
+
+# Pycache
+*/__pycache__
+
+# Environment variables
+.env
+
+scratchpad/
