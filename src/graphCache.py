@@ -52,8 +52,8 @@ def generateIntervalData(start, end, remCur, dataFolder : str):
     ipAddress = g.new_vertex_property("string")
     positionInRoute = g.new_vertex_property("int") # 1 - start, 2 - end
 
-    g.edge_properties['min'] = minEdgeWeight
-    g.edge_properties['avg'] = avgEdgeWeight
+    g.edge_properties['minEdge'] = minEdgeWeight
+    g.edge_properties['avgEdge'] = avgEdgeWeight
     g.vertex_properties['ip'] = ipAddress
     g.vertex_properties['positionInRoute'] = positionInRoute
     addressToVertex = {}
