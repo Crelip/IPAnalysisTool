@@ -9,3 +9,6 @@ env/
 .env
 
 scratchpad/
+
+# IDE
+.idea/
