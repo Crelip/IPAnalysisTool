@@ -2,14 +2,15 @@ import graph_tool.all as gt
 from graph_tool import topology
 import numpy as np
 from sortedcontainers import SortedList
-from pathlib import Path
 from util.weekUtil import getWeek
 import os
 from datetime import datetime
 
 # Returns the radius of a graph
 # mimimum: if True (default), returns the radius based on the minimum values of edges, otherwise returns the radius based on the average values of edges
-def radius(inputFile: Path, average: bool = False) -> int:
+def radius(date: datetime.date, average: bool = False) -> int:
+    inputFile = os.path.expanduser(f'''~/.cache/IPAnalysisTool/graphs/week/{datetime.strftime(
+        getWeek(date)[0],"%Y-%m-%d")}.gt''')
     g : gt.Graph = gt.load_graph(str(inputFile))
     eccentricities : SortedList = SortedList()
     edgeWeight = g.ep.avgEdge if average else g.ep.minEdge
@@ -26,8 +27,7 @@ def main():
     parser.add_argument("-a", "--average", action="store_true", help="Returns the radius based on the average values of edges.")
     args = parser.parse_args()
     if args.date:
-        print(radius(Path(os.path.expanduser(f'''~/.cache/IPAnalysisTool/graphs/week/{datetime.strftime(
-        getWeek(datetime.strptime(args.date, "%Y-%m-%d"))[0],"%Y-%m-%d")}.gt''')),
+        print(radius(datetime.strptime(args.date, "%Y-%m-%d"),
         args.average))
     else:
         print("Please provide a date.")

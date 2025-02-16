@@ -60,8 +60,7 @@ def internalAccessibilityWithinHops(date, doStructuredOutput: bool = False, outp
         if not os.path.exists(outputFolderPath):
             os.makedirs(outputFolderPath, exist_ok=True)
         outputFile = os.path.join(outputFolderPath, f"{dateStripped}.json")
-        with open(outputFile, "w") as f:
-            f.write(json.dumps(output, indent=2))
+        return json.dumps(output, indent=2)
 
 
 # Interface for other scripts
@@ -89,7 +88,7 @@ def main():
     parser.add_argument("-s", "--structured", action="store_true", help="Outputs the data in a structured JSON format.")
     args = parser.parse_args()
     if args.date:
-        accessibilityWithinHops(datetime.datetime.strptime(args.date, "%Y-%m-%d").date(), args.structured)
+        print(accessibilityWithinHops(datetime.strptime(args.date, "%Y-%m-%d").date(), args.structured))
     else:
         print("Please provide a date.")
         exit(1)
