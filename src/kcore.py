@@ -1,14 +1,11 @@
 import graph_tool.all as gt
-import os
 import datetime
 from collections import defaultdict
-from json import dumps
-from util.weekUtil import getWeek
+from util.graphGetter import getGraphByDate
 
 
 def kcoreDecomposition(date: datetime.date):
-    inputFile : str = os.path.expanduser(f'''~/.cache/IPAnalysisTool/graphs/week/{datetime.datetime.strftime(getWeek(date)[0], "%Y-%m-%d")}.gt''')
-    g : gt.Graph = gt.load_graph(inputFile)
+    g : gt.Graph = getGraphByDate(date)
     kcore = gt.kcore_decomposition(g)
     groups = defaultdict(list)
     maxK = 0
@@ -30,6 +27,7 @@ def kcoreDecomposition(date: datetime.date):
 
 def main():
     from argparse import ArgumentParser
+    from json import dumps
     parser = ArgumentParser()
     parser.add_argument("-d", "--date", help="Generates data for the week containing the given date.")
     args = parser.parse_args()
