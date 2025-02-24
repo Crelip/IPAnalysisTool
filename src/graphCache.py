@@ -49,11 +49,13 @@ def generateIntervalData(start, end, remCur, dataFolder : str):
     g = gt.Graph(directed=True)
     minEdgeWeight = g.new_edge_property("float")
     avgEdgeWeight = g.new_edge_property("float")
+    traversalsNum = g.new_edge_property("int")
     ipAddress = g.new_vertex_property("string")
     positionInRoute = g.new_vertex_property("int") # 1 - start, 2 - end
 
     g.edge_properties['minEdge'] = minEdgeWeight
     g.edge_properties['avgEdge'] = avgEdgeWeight
+    g.edge_properties['traversals'] = traversalsNum
     g.vertex_properties['ip'] = ipAddress
     g.vertex_properties['positionInRoute'] = positionInRoute
     addressToVertex = {}
@@ -120,9 +122,12 @@ def generateIntervalData(start, end, remCur, dataFolder : str):
                     existingEdges[(srcAddress, destAddress)] = edge
                     minEdgeWeight[edge] = times[i]
                     avgEdgeWeight[edge] = times[i]
+                    traversalsNum[edge] = 1
                 # Update edge's weights if it does exist
                 else:
                     edge = existingEdges[(srcAddress, destAddress)]
+                    # Increment number of traversals
+                    traversalsNum[edge] += 1
                     # Average ping between 2 points
                     avgEdgeWeight[edge] = (avgEdgeWeight[edge] + float(times[i])) / 2
                     # Shortest ping between 2 points
