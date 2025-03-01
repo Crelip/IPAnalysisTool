@@ -4,7 +4,8 @@ from collections import defaultdict
 from util.graphGetter import getGraphByDate
 
 
-def kcoreDecomposition(date: datetime.date):
+def kcoreDecomposition(date: datetime.date, **kwargs):
+    output = kwargs.get("output") or "json"
     g : gt.Graph = getGraphByDate(date)
     kcore = gt.kcore_decomposition(g)
     groups = defaultdict(list)
@@ -13,7 +14,7 @@ def kcoreDecomposition(date: datetime.date):
         k = kcore[v]
         groups[k].append(g.vp.ip[v])
         if k > maxK: maxK = k
-    return {
+    result = {
         "date": datetime.datetime.strftime(date, "%Y-%m-%d"),
         "maxK": maxK,
         "decomposition": [
@@ -23,7 +24,11 @@ def kcoreDecomposition(date: datetime.date):
                 "IPs": groups[i]
             } for i in range(maxK + 1) if i in groups.keys()
         ]
-    }
+    } if output == "json" \
+        else [g, kcore] \
+        if output == "graph" \
+        else None
+    return result
 
 def main():
     from argparse import ArgumentParser

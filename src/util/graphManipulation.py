@@ -5,4 +5,4 @@ def addInverseEP(g: gt.Graph):
     g.edge_properties["minEdgeInverse"] = inverse
     for e in g.edges():
         inverse[e] = 1 / g.ep.minEdge[e]
-    return inverse
+    return g

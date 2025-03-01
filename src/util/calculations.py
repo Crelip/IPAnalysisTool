@@ -1,7 +1,6 @@
 from collections.abc import Iterable
 from math import floor
 
-
 def lenOfIterable(items: Iterable) -> int:
     result : int = 0
     for item in items:
@@ -12,7 +11,6 @@ def getHIndex(g, values, **kwargs) -> int:
     n = kwargs.get('count', 0)
     freq = [0] * (n + 1)
     for item in g.edges():
-        print(values[item])
         v = floor(values[item])
         if v >= n: freq[n] += 1
         else: freq[v] += 1
