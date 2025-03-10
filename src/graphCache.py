@@ -44,7 +44,7 @@ def getDatabaseRange() -> Tuple[datetime.date, datetime.date]:
     return earliestDate, latestDate
 
 # Generates a graph based on all data from start date to end date
-def generateIntervalData(start, end, remCur, dataFolder : str):
+def generateIntervalData(start, end, remCur, dataFolder : str, verbose : bool):
     start = datetime.strftime(start, '%Y-%m-%d')
     end = datetime.strftime(end, '%Y-%m-%d')
 
@@ -147,9 +147,11 @@ def generateIntervalData(start, end, remCur, dataFolder : str):
     g.gp["metadata"] = metadata
     g.gp["metadata"] = dumps({"routeDates": [getDateString(date) for date in routeDates]})
     g.save(f"{dataFolder}/{start}.gt")
+    if verbose:
+        print(f"Generated graph for week starting with {start}.")
 
 # For each week, generate a graph using generateOutput()
-def generateWeeklyData(start: datetime.date, end: datetime.date):
+def generateWeeklyData(start: datetime.date, end: datetime.date, verbose: bool):
     # Database connection setup
     remConn = psycopg2.connect("dbname=" + os.environ["IP_DBNAME"] + " user=" + os.environ["IP_USER"] + " password=" + os.environ["IP_PASSWORD"] + " host=" + os.environ["IP_HOST"])
     remCur = remConn.cursor()
@@ -160,7 +162,7 @@ def generateWeeklyData(start: datetime.date, end: datetime.date):
 
     weeks = getWeekDates(start, end)
     for week in weeks:
-        generateIntervalData(week[0], week[0] + timedelta(days=7), remCur, dataFolder)
+        generateIntervalData(week[0], week[0] + timedelta(days=7), remCur, dataFolder, verbose)
 
     remCur.close()
     remConn.close()
@@ -172,9 +174,11 @@ def main(args = None):
                         help="Generates a graph only for the aforementioned time interval which begins with the interval containing the first given date and ends with the interval containing the second given date.")
     parser.add_argument("-t", "--time",
                         help="Generates a graph only for the aforementioned time interval which includes the given date.")
+    parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
 
     if args == None: args = parser.parse_args()
     else: args = parser.parse_args(args)
+
     if args.interval:
         start = getWeek(datetime.strptime(args.interval[0], "%Y-%m-%d"))[0]
         end = getWeek(datetime.strptime(args.interval[1], "%Y-%m-%d"))[1]
@@ -182,6 +186,7 @@ def main(args = None):
         start, end = getWeek(datetime.strptime(args.time, "%Y-%m-%d"))
     else:
         start, end = getDatabaseRange()
-    generateWeeklyData(start, end)
+
+    generateWeeklyData(start, end, args.verbose)
 
 if __name__ == "__main__": main()
