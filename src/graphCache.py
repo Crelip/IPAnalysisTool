@@ -15,7 +15,9 @@ import psycopg2
 import os
 import graph_tool.all as gt
 from typing import Tuple
-from util.weekUtil import getWeek, getWeekDates
+from util.weekUtil import getWeek, getWeekDates, getDateString
+from json import dumps
+from sortedcontainers import SortedSet
 
 # Load environment variables
 load_dotenv()
@@ -80,7 +82,7 @@ def generateIntervalData(start, end, remCur, dataFolder : str):
     ipAddress[node] = startingaddress
     positionInRoute[node] = 1
 
-    remCur.execute(f"""SELECT t_route, t_roundtrip FROM topology
+    remCur.execute(f"""SELECT t_route, t_roundtrip, t_date FROM topology
                    WHERE NOT (-1 = ANY(t_roundtrip))
                    AND NOT ('0.0.0.0/32' = ANY(t_route))
                    AND t_status = 'C'
@@ -89,10 +91,11 @@ def generateIntervalData(start, end, remCur, dataFolder : str):
                    AND t_hops > 1""")
 
     existingEdges = {}
-
+    routeDates = SortedSet()
     for record in remCur:
         route = record[0]
         times = record[1]
+        date = record[2]
         endpoint = route[-1].split("/")[0]
         for i in range(len(route) - 1):
             src, dest = route[i], route[i + 1]
@@ -135,7 +138,14 @@ def generateIntervalData(start, end, remCur, dataFolder : str):
                 
                 if destAddress == endpoint:
                     positionInRoute[destNode] = 2
+        # Check if we had the date before
+        date = date.date()
+        if date not in routeDates:
+            routeDates.add(date)
 
+    metadata = g.new_graph_property("string")
+    g.gp["metadata"] = metadata
+    g.gp["metadata"] = dumps({"routeDates": [getDateString(date) for date in routeDates]})
     g.save(f"{dataFolder}/{start}.gt")
 
 # For each week, generate a graph using generateOutput()
@@ -155,13 +165,16 @@ def generateWeeklyData(start: datetime.date, end: datetime.date):
     remCur.close()
     remConn.close()
 
-def main():
+def main(args = None):
     from argparse import ArgumentParser
-    # Parse arguments
     parser = ArgumentParser()
-    parser.add_argument("-i", "--interval", nargs=2, help="Generates a graph only for the aforementioned time interval which begins with the interval containing the first given date and ends with the interval containing the second given date.")
-    parser.add_argument("-t", "--time", help="Generates a graph only for the aforementioned time interval which includes the given date.")
-    args = parser.parse_args()
+    parser.add_argument("-i", "--interval", nargs=2,
+                        help="Generates a graph only for the aforementioned time interval which begins with the interval containing the first given date and ends with the interval containing the second given date.")
+    parser.add_argument("-t", "--time",
+                        help="Generates a graph only for the aforementioned time interval which includes the given date.")
+
+    if args == None: args = parser.parse_args()
+    else: args = parser.parse_args(args)
     if args.interval:
         start = getWeek(datetime.strptime(args.interval[0], "%Y-%m-%d"))[0]
         end = getWeek(datetime.strptime(args.interval[1], "%Y-%m-%d"))[1]
@@ -170,7 +183,5 @@ def main():
     else:
         start, end = getDatabaseRange()
     generateWeeklyData(start, end)
-
-
 
 if __name__ == "__main__": main()

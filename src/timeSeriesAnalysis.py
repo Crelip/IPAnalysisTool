@@ -123,7 +123,7 @@ def timeSeriesAnalysis(verbose=False, dateRange=None, maxThreads=1):
 
     return pd.DataFrame(data)
 
-if __name__ == '__main__':
+def main(args = None):
     from argparse import ArgumentParser
     parser = ArgumentParser()
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
@@ -132,9 +132,13 @@ if __name__ == '__main__':
     parser.add_argument("-t", "--threads", type=int, default=1, help="Number of threads")
     # Parameters to measure
     parser.add_argument("-a", "--all", action="store_true", help="Analyze all parameters")
-    args = parser.parse_args()
+    if args == None: args = parser.parse_args()
+    else: args = parser.parse_args(args)
     print(args.range)
     result = timeSeriesAnalysis(args.verbose, args.range, args.threads)
-    result.to_csv(args.output, index = False)
+    result.to_csv(args.output, index=False)
     if args.verbose:
         print(f"Data saved to {args.output}")
+
+if __name__ == '__main__':
+    main()
