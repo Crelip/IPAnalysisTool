@@ -1,7 +1,7 @@
 import graph_tool.all as gt
 from graph_tool.topology import similarity
 
-from h_backbone import hBackbone
+from hBackbone import hBackbone
 from kcore import kcoreDecomposition
 from datetime import date
 
