@@ -145,7 +145,8 @@ def generateIntervalData(start, end, remCur, dataFolder : str, verbose : bool):
 
     metadata = g.new_graph_property("string")
     g.gp["metadata"] = metadata
-    g.gp["metadata"] = dumps({"routeDates": [getDateString(date) for date in routeDates]})
+    g.gp["metadata"] = dumps({"date": start,
+                              "routeDates": [getDateString(date) for date in routeDates]})
     g.save(f"{dataFolder}/{start}.gt")
     if verbose:
         print(f"Generated graph for week starting with {start}.")

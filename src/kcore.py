@@ -1,24 +1,33 @@
 import graph_tool.all as gt
 import datetime
 from collections import defaultdict
+
 from util.graphGetter import getGraphByDate
 from util.graphManipulation import makeUndirectedGraph
+from util.weekUtil import getDateObject
+from json import loads
 
 
-def kcoreDecomposition(date: datetime.date, **kwargs):
+def kCoreDecompositionFromDate(date: datetime.date, **kwargs):
+    try:
+        return kCoreDecomposition(getGraphByDate(date), **kwargs)
+    except KeyError:
+        return None
+
+def kCoreDecomposition(g: gt.Graph, **kwargs):
     output = kwargs.get("output") or "json"
-    g : gt.Graph = getGraphByDate(date)
     # Do k-core decomposition on an undirected version of the graph
     undirected = makeUndirectedGraph(g)
-    kcore = gt.kcore_decomposition(undirected)
+    kCore = gt.kcore_decomposition(undirected)
     groups = defaultdict(list)
+    metadata = loads(g.gp.metadata)
     maxK = 0
     for v in g.vertices():
-        k = kcore[v]
+        k = kCore[v]
         groups[k].append(g.vp.ip[v])
         if k > maxK: maxK = k
     result = {
-        "date": datetime.datetime.strftime(date, "%Y-%m-%d"),
+        "date": metadata["date"],
         "maxK": maxK,
         "decomposition": [
             {
@@ -28,7 +37,7 @@ def kcoreDecomposition(date: datetime.date, **kwargs):
             } for i in range(maxK + 1) if i in groups.keys()
         ]
     } if output == "json" \
-        else [g, kcore, date] \
+        else [g, kCore, getDateObject(metadata["date"])] \
         if output == "graph" \
         else None
     return result
@@ -39,7 +48,7 @@ def main():
     parser = ArgumentParser()
     parser.add_argument("-d", "--date", help="Generates data for the week containing the given date.")
     args = parser.parse_args()
-    print(dumps(kcoreDecomposition(datetime.datetime.strptime(args.date, "%Y-%m-%d").date()), indent=2))
+    print(dumps(kCoreDecompositionFromDate(datetime.datetime.strptime(args.date, "%Y-%m-%d").date()), indent=2))
 
 if __name__ == "__main__":
     main()

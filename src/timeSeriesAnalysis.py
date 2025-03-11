@@ -10,13 +10,14 @@
     # - maximum k-core size
 
 from util.weekUtil import getWeekDates, getDateString, getDateObject, getCacheDateRange
-from kcore import kcoreDecomposition
+from kcore import kCoreDecompositionFromDate
 import graph_tool.all as gt
 import numpy as np
 import pandas as pd
 from sortedcontainers import SortedSet
 import concurrent.futures
 from functools import partial
+from json import loads
 
 
 # Calculate network diameter in parallel
@@ -29,20 +30,18 @@ def calculateUnweightedDiameter(graph):
     shortest_distances = gt.shortest_distance(graph, directed=False)
     return SortedSet(max(shortest_distances[v]) for v in graph.vertices())[-1]
 
-def processDate(i, date, verbose=False):
+def processDate(i, date, verbose = False, weekLong = False):
     try:
-        currentGraph, currentKcore, _ = kcoreDecomposition(date, output="graph")
+        currentGraph, currentKcore, _ = kCoreDecompositionFromDate(date, output="graph")
     except KeyError:
-        return i, None, None, None, None
+        return i, None, None, None, None, None
 
     if currentGraph:
-        # Execute both calculations using separate processes
-        with concurrent.futures.ProcessPoolExecutor(max_workers=2) as executor:
-            weighted_future = executor.submit(calculateWeightedDiameter, currentGraph)
-            unweighted_future = executor.submit(calculateUnweightedDiameter, currentGraph)
-
-            diameter = weighted_future.result()
-            diameterVertices = unweighted_future.result()
+        # Check if the graph contains data from every day of the week if weekLong is True
+        if weekLong and len(loads(currentGraph.gp.metadata)["routeDates"]) < 7:
+            return i, None, None, None, None, None
+        diameter = calculateWeightedDiameter(currentGraph)
+        diameterVertices = calculateUnweightedDiameter(currentGraph)
 
         # Count vertices and edges
         vertices = currentGraph.num_vertices()
@@ -63,7 +62,7 @@ def processDate(i, date, verbose=False):
         return i, 0, 0, 0, 0, np.zeros(31, dtype=int)
 
 
-def timeSeriesAnalysis(verbose=False, dateRange=None, maxThreads=1):
+def timeSeriesAnalysis(verbose=False, dateRange=None, maxThreads=1, weekLong=False):
     graphDateRange = getCacheDateRange()
     dates = [date[0] for date in getWeekDates(graphDateRange[0], graphDateRange[1])]
     if dateRange:
@@ -89,8 +88,8 @@ def timeSeriesAnalysis(verbose=False, dateRange=None, maxThreads=1):
 
     # Use ProcessPoolExecutor to process dates in parallel
     with concurrent.futures.ProcessPoolExecutor(max_workers=maxThreads) as executor:
-        # Create a partial function with fixed verbose parameter
-        worker = partial(processDate, verbose=verbose)
+        # Create a partial function with some fixed parameters
+        worker = partial(processDate, verbose=verbose, weekLong=weekLong)
 
         # Submit all tasks and map them to their date index
         future_to_idx = {executor.submit(worker, i, allDates[i]): i for i in range(allDatesCount)}
@@ -130,12 +129,13 @@ def main(args = None):
     parser.add_argument("-o", "--output", help="Choose where to output")
     parser.add_argument("-r", "--range", help="Choose the range of dates to analyze", nargs=2)
     parser.add_argument("-t", "--threads", type=int, default=1, help="Number of threads")
+    parser.add_argument("-w", "--weekLong", action="store_true", help="Analyze only full weeks of data.")
     # Parameters to measure
     parser.add_argument("-a", "--all", action="store_true", help="Analyze all parameters")
     if args == None: args = parser.parse_args()
     else: args = parser.parse_args(args)
     print(args.range)
-    result = timeSeriesAnalysis(args.verbose, args.range, args.threads)
+    result = timeSeriesAnalysis(args.verbose, args.range, args.threads, args.weekLong)
     result.to_csv(args.output, index=False)
     if args.verbose:
         print(f"Data saved to {args.output}")

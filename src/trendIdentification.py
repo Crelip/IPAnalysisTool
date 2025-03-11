@@ -3,7 +3,7 @@ import numpy as np
 from visualize import visualizeChart
 import matplotlib.pyplot as plt
 
-def linearRegression(data, keyValue="networkDiameter", keyName="Network Diameter"):
+def linearRegression(data, keyValue="networkDiameter (ms)", keyName="Network Diameter"):
     from sklearn.linear_model import LinearRegression
     data = data.reset_index()
     data["dateOrdinal"] = data["date"].map(pd.Timestamp.toordinal)
@@ -67,7 +67,7 @@ def linearRegression(data, keyValue="networkDiameter", keyName="Network Diameter
     fig.canvas.mpl_connect('scroll_event', zoom_fun)
     plt.show()
 
-def ARIMAForecast(data, predict_weeks=100, keyValue="", keyName="Network Diameter", verbose = False):
+def ARIMAForecast(data, predict_weeks=100, keyValue="networkDiameter (ms)", keyName="Network Diameter", verbose = False):
     """
         Perform ARIMA modeling on time series data and visualize predictions.
         """
@@ -157,8 +157,35 @@ def ARIMAForecast(data, predict_weeks=100, keyValue="", keyName="Network Diamete
 
     return model_fit, forecast, future_dates
 
+def linearApproximation(data, keyValue="networkDiameter (ms)", verbose=False, weeksToPredict=100):
+    data.sort_values("date", inplace=True)
+    data = data.dropna(subset=[keyValue])
+    data["dateOrdinal"] = data["date"].map(pd.Timestamp.toordinal)
+    slope, intercept = np.polyfit(data["dateOrdinal"], data[keyValue], 1)
+    print("Slope:", slope, "Intercept:", intercept)
+    predict = np.poly1d((slope, intercept))
 
-def trendIdentification(filename, verbose=False, method="linear", impute = False):
+    startDate = data["date"].min()
+    endDate = data["date"].max()
+    futureEndDate = endDate + pd.Timedelta(weeks=weeksToPredict)
+    fullDates = pd.date_range(start=startDate, end=futureEndDate, freq="W-MON")
+    fullData = pd.DataFrame({"date": fullDates})
+    fullData["dateOrdinal"] = fullData["date"].map(pd.Timestamp.toordinal)
+    fullData["predicted"] = predict(fullData["dateOrdinal"])
+    merged = pd.merge(fullData, data[["date", keyValue]], on="date", how="left")
+    merged["filledValue"] = merged[keyValue].fillna(merged["predicted"])
+
+    # Plot data and the linear fit
+    plt.figure(figsize=(10, 6))
+    plt.scatter(merged["date"], merged["filledValue"], label="Data points", color="blue")
+    plt.plot(merged["date"], merged["predicted"], label="Linear approximation", color="red")
+    plt.xlabel("Date")
+    plt.ylabel(keyValue)
+    plt.title("Linear approximation of weekly data")
+    plt.legend()
+    plt.show()
+
+def trendIdentification(filename, verbose=False, method="linreg", impute = False):
     data = pd.read_csv(filename)
     data["date"] = pd.to_datetime(data["date"])
     # Clean/impute missing weeks
@@ -171,8 +198,9 @@ def trendIdentification(filename, verbose=False, method="linear", impute = False
         data.ffill(inplace=True)
     else: data = data[data['numVertices'] != 0].copy()
     # visualizeChart(data, "date", "networkDiameter", "Date", "Network Diameter", "Network Diameter Over Time")
-    if method == "linear": linearRegression(data)
+    if method == "linreg" or method == "linearRegression" : linearRegression(data)
     elif method == "arima": ARIMAForecast(data, verbose=verbose)
+    elif method == "linapp" or method == "linearApproximation": linearApproximation(data, verbose=verbose)
     else:
         raise ValueError(f"Invalid method: {method}")
 
