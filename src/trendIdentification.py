@@ -3,7 +3,7 @@ import numpy as np
 from visualize import visualizeChart
 import matplotlib.pyplot as plt
 
-def linearRegression(data, keyValue="networkDiameter (ms)", keyName="Network Diameter"):
+def linearRegression(data, keyValue="networkDiameter (vertices)", keyName="Network Diameter"):
     from sklearn.linear_model import LinearRegression
     data = data.reset_index()
     data["dateOrdinal"] = data["date"].map(pd.Timestamp.toordinal)
@@ -67,7 +67,7 @@ def linearRegression(data, keyValue="networkDiameter (ms)", keyName="Network Dia
     fig.canvas.mpl_connect('scroll_event', zoom_fun)
     plt.show()
 
-def ARIMAForecast(data, predict_weeks=100, keyValue="networkDiameter (ms)", keyName="Network Diameter", verbose = False):
+def ARIMAForecast(data, predict_weeks=100, keyValue="networkDiameter (vertices)", keyName="Network Diameter", verbose = False):
     """
         Perform ARIMA modeling on time series data and visualize predictions.
         """
@@ -157,7 +157,7 @@ def ARIMAForecast(data, predict_weeks=100, keyValue="networkDiameter (ms)", keyN
 
     return model_fit, forecast, future_dates
 
-def linearApproximation(data, keyValue="networkDiameter (ms)", verbose=False, weeksToPredict=100):
+def linearApproximation(data, keyValue="networkDiameter (vertices)", verbose=False, weeksToPredict=100):
     data.sort_values("date", inplace=True)
     data = data.dropna(subset=[keyValue])
     data["dateOrdinal"] = data["date"].map(pd.Timestamp.toordinal)
