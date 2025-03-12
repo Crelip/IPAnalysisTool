@@ -49,42 +49,28 @@ def generateIntervalData(start, end, remCur, dataFolder : str, verbose : bool):
     end = datetime.strftime(end, '%Y-%m-%d')
 
     g = gt.Graph(directed=True)
-    minEdgeWeight = g.new_edge_property("float")
-    avgEdgeWeight = g.new_edge_property("float")
     traversalsNum = g.new_edge_property("int")
     ipAddress = g.new_vertex_property("string")
     positionInRoute = g.new_vertex_property("int") # 1 - start, 2 - end
-
-    g.edge_properties['minEdge'] = minEdgeWeight
-    g.edge_properties['avgEdge'] = avgEdgeWeight
+    nodeDistances = g.new_vertex_property("vector<double>")
     g.edge_properties['traversals'] = traversalsNum
     g.vertex_properties['ip'] = ipAddress
     g.vertex_properties['positionInRoute'] = positionInRoute
+    g.vertex_properties['nodeDistances'] = nodeDistances
     addressToVertex = {}
     VertexToAddress = {}
 
     # Adding starting IP address
-    remCur.execute(f"""WITH counts AS (SELECT t_route[1] AS address, COUNT(*) AS count FROM topology
-                   WHERE NOT (-1 = ANY(t_roundtrip))
-                   AND t_date >= '{start}'
-                   AND t_date < '{end}'
-                   AND t_hops > 1
-                   GROUP BY t_route[1])
-                   SELECT address 
-                   FROM counts ORDER BY count DESC LIMIT 1;""")
-    record = remCur.fetchone()
-    if(record is None): return
-    startingaddress = record[0]
-    startingaddress = startingaddress.split("/")[0]
+    startingaddress = "localhost"
     node = g.add_vertex()
     addressToVertex[startingaddress] = node
     VertexToAddress[node] = startingaddress
     ipAddress[node] = startingaddress
     positionInRoute[node] = 1
+    nodeDistances[node] = [0]
 
     remCur.execute(f"""SELECT t_route, t_roundtrip, t_date FROM topology
-                   WHERE NOT (-1 = ANY(t_roundtrip))
-                   AND NOT ('0.0.0.0/32' = ANY(t_route))
+                   WHERE NOT ('0.0.0.0/32' = ANY(t_route))
                    AND t_status = 'C'
                    AND t_date >= '{start}'
                    AND t_date <= '{end}'
@@ -97,8 +83,11 @@ def generateIntervalData(start, end, remCur, dataFolder : str, verbose : bool):
         times = record[1]
         date = record[2]
         endpoint = route[-1].split("/")[0]
-        for i in range(len(route) - 1):
-            src, dest = route[i], route[i + 1]
+        route_length = len(route)
+        for i in range(route_length):
+            if i == 0: src, dest = startingaddress, route[i]
+            else: src, dest = route[i - 1], route[i]
+
             if not(src == '0.0.0.0/32' or dest == '0.0.0.0/32') and src != dest:
                 srcAddress = src.split("/")[0]
                 destAddress = dest.split("/")[0]
@@ -123,21 +112,19 @@ def generateIntervalData(start, end, remCur, dataFolder : str, verbose : bool):
                 if (srcAddress, destAddress) not in existingEdges.keys():
                     edge = g.add_edge(addressToVertex[srcAddress], addressToVertex[destAddress])
                     existingEdges[(srcAddress, destAddress)] = edge
-                    minEdgeWeight[edge] = times[i]
-                    avgEdgeWeight[edge] = times[i]
                     traversalsNum[edge] = 1
                 # Update edge's weights if it does exist
                 else:
                     edge = existingEdges[(srcAddress, destAddress)]
                     # Increment number of traversals
                     traversalsNum[edge] += 1
-                    # Average ping between 2 points
-                    avgEdgeWeight[edge] = (avgEdgeWeight[edge] + float(times[i])) / 2
-                    # Shortest ping between 2 points
-                    if minEdgeWeight[edge] > float(times[i]): minEdgeWeight[edge] = float(times[i])
                 
                 if destAddress == endpoint:
                     positionInRoute[destNode] = 2
+
+                # Add distance to node
+                nodeDistances[destNode].append(times[i])
+
         # Check if we had the date before
         date = date.date()
         if date not in routeDates:
@@ -150,9 +137,10 @@ def generateIntervalData(start, end, remCur, dataFolder : str, verbose : bool):
     g.save(f"{dataFolder}/{start}.gt")
     if verbose:
         print(f"Generated graph for week starting with {start}.")
+        print(f"Number of vertices: {g.num_vertices()}\nNumber of edges: {g.num_edges()}")
 
 # For each week, generate a graph using generateOutput()
-def generateWeeklyData(start: datetime.date, end: datetime.date, verbose: bool):
+def generateWeeklyData(start: datetime.date, end: datetime.date, verbose: bool, numThreads: int = 1):
     # Database connection setup
     remConn = psycopg2.connect("dbname=" + os.environ["IP_DBNAME"] + " user=" + os.environ["IP_USER"] + " password=" + os.environ["IP_PASSWORD"] + " host=" + os.environ["IP_HOST"])
     remCur = remConn.cursor()
@@ -176,6 +164,7 @@ def main(args = None):
     parser.add_argument("-t", "--time",
                         help="Generates a graph only for the aforementioned time interval which includes the given date.")
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
+    parser.add_argument("t", "--threads", type=int)
 
     if args == None: args = parser.parse_args()
     else: args = parser.parse_args(args)
@@ -188,6 +177,6 @@ def main(args = None):
     else:
         start, end = getDatabaseRange()
 
-    generateWeeklyData(start, end, args.verbose)
+    generateWeeklyData(start, end, args.verbose, args.threads)
 
 if __name__ == "__main__": main()
