@@ -8,9 +8,9 @@ from util.weekUtil import getDateObject
 from json import loads
 
 
-def kCoreDecompositionFromDate(date: datetime.date, **kwargs):
+def kCoreDecompositionFromDate(date: datetime.date, weighted=False, **kwargs):
     try:
-        return kCoreDecomposition(getGraphByDate(date), **kwargs)
+        return kCoreDecomposition(getGraphByDate(date, weighted), **kwargs)
     except KeyError:
         return None
 

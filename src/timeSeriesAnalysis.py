@@ -8,6 +8,7 @@
 # K-core:
     # - individual k-core sizes
     # - maximum k-core size
+from anyio import current_effective_deadline
 
 from util.weekUtil import getWeekDates, getDateString, getDateObject, getCacheDateRange
 from kcore import kCoreDecompositionFromDate
@@ -22,7 +23,7 @@ from json import loads
 
 # Calculate network diameter in parallel
 def calculateWeightedDiameter(graph):
-    shortest_distances = gt.shortest_distance(graph, weights=graph.ep.minEdge, directed=False)
+    shortest_distances = gt.shortest_distance(graph, weights=graph.ep.minWeight, directed=False)
     return SortedSet(max(shortest_distances[v]) for v in graph.vertices())[-1]
 
 
@@ -30,18 +31,20 @@ def calculateUnweightedDiameter(graph):
     shortest_distances = gt.shortest_distance(graph, directed=False)
     return SortedSet(max(shortest_distances[v]) for v in graph.vertices())[-1]
 
-def processDate(i, date, verbose = False, weekLong = False):
+def processDate(i, date, verbose = False, weekLong = False, weighted = False):
     try:
-        currentGraph, currentKcore, _ = kCoreDecompositionFromDate(date, output="graph")
+        currentGraph, currentKcore, _ = kCoreDecompositionFromDate(date, weighted=weighted, output="graph")
     except KeyError:
-        return i, None, None, None, None, None
+        return i, None, None, None, None, None, np.zeros(31, dtype=int)
 
     if currentGraph:
         # Check if the graph contains data from every day of the week if weekLong is True
         if weekLong and len(loads(currentGraph.gp.metadata)["routeDates"]) < 7:
-            return i, None, None, None, None, None
-        diameter = calculateWeightedDiameter(currentGraph)
+            return i, None, None, None, None, None, np.zeros(31, dtype=int)
+        if weighted: diameter = calculateWeightedDiameter(currentGraph)
+        else: diameter = 0
         diameterVertices = calculateUnweightedDiameter(currentGraph)
+        radius = max([currentGraph.vp.minDistance[v] for v in currentGraph.vertices()])
 
         # Count vertices and edges
         vertices = currentGraph.num_vertices()
@@ -57,12 +60,12 @@ def processDate(i, date, verbose = False, weekLong = False):
             print("Week " + getDateString(date) + " done")
             print(diameter)
 
-        return i, diameter, diameterVertices, vertices, edges, localKcoreSizes
+        return i, diameter, diameterVertices, vertices, edges, radius, localKcoreSizes
     else:
-        return i, 0, 0, 0, 0, np.zeros(31, dtype=int)
+        return i, 0, 0, 0, 0, 0, np.zeros(31, dtype=int),
 
 
-def timeSeriesAnalysis(verbose=False, dateRange=None, maxThreads=1, weekLong=False):
+def timeSeriesAnalysis(verbose=False, dateRange=None, maxThreads=1, weekLong=False, weighted=False):
     graphDateRange = getCacheDateRange()
     dates = [date[0] for date in getWeekDates(graphDateRange[0], graphDateRange[1])]
     if dateRange:
@@ -84,12 +87,13 @@ def timeSeriesAnalysis(verbose=False, dateRange=None, maxThreads=1, weekLong=Fal
     networkDiametersInVertices = np.zeros(allDatesCount, dtype=int)
     numVertices = np.zeros(allDatesCount, dtype=int)
     numEdges = np.zeros(allDatesCount, dtype=int)
+    radius = np.zeros(allDatesCount, dtype=float)
     kCoreSizes = np.zeros((allDatesCount, 31), dtype=int)
 
     # Use ProcessPoolExecutor to process dates in parallel
     with concurrent.futures.ProcessPoolExecutor(max_workers=maxThreads) as executor:
         # Create a partial function with some fixed parameters
-        worker = partial(processDate, verbose=verbose, weekLong=weekLong)
+        worker = partial(processDate, verbose=verbose, weekLong=weekLong, weighted=weighted)
 
         # Submit all tasks and map them to their date index
         future_to_idx = {executor.submit(worker, i, allDates[i]): i for i in range(allDatesCount)}
@@ -97,12 +101,13 @@ def timeSeriesAnalysis(verbose=False, dateRange=None, maxThreads=1, weekLong=Fal
         # Process results as they complete
         for future in concurrent.futures.as_completed(future_to_idx):
             try:
-                i, diameter, diameterVertices, vertices, edges, k_cores = future.result()
+                i, diameter, diameterVertices, vertices, edges, currentRadius, k_cores = future.result()
                 if diameter is not None:
                     networkDiametersInMs[i] = diameter
                     networkDiametersInVertices[i] = diameterVertices
                     numVertices[i] = vertices
                     numEdges[i] = edges
+                    radius[i] = currentRadius
                     kCoreSizes[i] = k_cores
             except Exception as e:
                 print(f"Error processing date: {e}")
@@ -113,7 +118,8 @@ def timeSeriesAnalysis(verbose=False, dateRange=None, maxThreads=1, weekLong=Fal
         "networkDiameter (ms)": networkDiametersInMs,
         "networkDiameter (vertices)": networkDiametersInVertices,
         "numEdges": numEdges,
-        "numVertices": numVertices
+        "numVertices": numVertices,
+        "radius (ms)": radius
     }
 
     # Add k-core columns properly
@@ -129,13 +135,14 @@ def main(args = None):
     parser.add_argument("-o", "--output", help="Choose where to output")
     parser.add_argument("-r", "--range", help="Choose the range of dates to analyze", nargs=2)
     parser.add_argument("-t", "--threads", type=int, default=1, help="Number of threads")
-    parser.add_argument("-w", "--weekLong", action="store_true", help="Analyze only full weeks of data.")
+    parser.add_argument("-l", "--weekLong", action="store_true", help="Analyze only full weeks of data.")
+    parser.add_argument("-w", "--weighted", action="store_true", help="Use edge weights")
     # Parameters to measure
     parser.add_argument("-a", "--all", action="store_true", help="Analyze all parameters")
     if args == None: args = parser.parse_args()
     else: args = parser.parse_args(args)
     print(args.range)
-    result = timeSeriesAnalysis(args.verbose, args.range, args.threads, args.weekLong)
+    result = timeSeriesAnalysis(args.verbose, args.range, args.threads, args.weekLong, args.weighted)
     result.to_csv(args.output, index=False)
     if args.verbose:
         print(f"Data saved to {args.output}")

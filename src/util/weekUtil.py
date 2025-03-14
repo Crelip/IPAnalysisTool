@@ -21,8 +21,8 @@ def getDateString(date: datetime.date) -> str:
 def getDateObject(input: str) -> datetime.date:
     return datetime.datetime.strptime(input, "%Y-%m-%d").date()
 
-def getCacheDateRange():
-    files = [f for f in os.listdir(os.path.expanduser("~/.cache/IPAnalysisTool/graphs/week"))]
+def getCacheDateRange(weighted = False):
+    files = [f for f in os.listdir(os.path.expanduser(f"~/.cache/IPAnalysisTool/graphs/week/{'base' if not weighted else 'weighted'}/"))]
     files.sort()
     firstFile = files[0]
     lastFile = files[-1]

@@ -22,6 +22,13 @@ from sortedcontainers import SortedSet
 # Load environment variables
 load_dotenv()
 
+def isNondecreasingArray(arr):
+    size = len(arr)
+    for i in range(1, size):
+        if arr[i] < arr[i - 1]:
+            return False
+    return True
+
 # Gets the earliest and latest date in the database
 def getDatabaseRange() -> Tuple[datetime.date, datetime.date]:
     # Database connection setup
@@ -44,7 +51,7 @@ def getDatabaseRange() -> Tuple[datetime.date, datetime.date]:
     return earliestDate, latestDate
 
 # Generates a graph based on all data from start date to end date
-def generateIntervalData(start, end, remCur, dataFolder : str, verbose : bool):
+def generateIntervalData(start, end, remCur, dataFolder : str, verbose : bool, weightedEdges : bool = False):
     start = datetime.strftime(start, '%Y-%m-%d')
     end = datetime.strftime(end, '%Y-%m-%d')
 
@@ -53,12 +60,29 @@ def generateIntervalData(start, end, remCur, dataFolder : str, verbose : bool):
     ipAddress = g.new_vertex_property("string")
     positionInRoute = g.new_vertex_property("int") # 1 - start, 2 - end
     nodeDistances = g.new_vertex_property("vector<double>")
+    minNodeDistance = g.new_vertex_property("float")
+    maxNodeDistance = g.new_vertex_property("float")
+    avgNodeDistance = g.new_vertex_property("float")
     g.edge_properties['traversals'] = traversalsNum
     g.vertex_properties['ip'] = ipAddress
     g.vertex_properties['positionInRoute'] = positionInRoute
     g.vertex_properties['nodeDistances'] = nodeDistances
+    g.vertex_properties['minDistance'] = minNodeDistance
+    g.vertex_properties['maxDistance'] = maxNodeDistance
+    g.vertex_properties['avgDistance'] = avgNodeDistance
+
     addressToVertex = {}
     VertexToAddress = {}
+
+    if weightedEdges:
+        edgeWeights = g.new_edge_property("vector<double>")
+        minEdgeWeight = g.new_edge_property("float")
+        avgEdgeWeight = g.new_edge_property("float")
+        maxEdgeWeight = g.new_edge_property("float")
+        g.edge_properties['weights'] = edgeWeights
+        g.edge_properties['avgWeight'] = avgEdgeWeight
+        g.edge_properties['maxWeight'] = maxEdgeWeight
+        g.edge_properties['minWeight'] = minEdgeWeight
 
     # Adding starting IP address
     startingaddress = "localhost"
@@ -73,7 +97,7 @@ def generateIntervalData(start, end, remCur, dataFolder : str, verbose : bool):
                    WHERE NOT ('0.0.0.0/32' = ANY(t_route))
                    AND t_status = 'C'
                    AND t_date >= '{start}'
-                   AND t_date <= '{end}'
+                   AND t_date < '{end}'
                    AND t_hops > 1""")
 
     existingEdges = {}
@@ -81,6 +105,7 @@ def generateIntervalData(start, end, remCur, dataFolder : str, verbose : bool):
     for record in remCur:
         route = record[0]
         times = record[1]
+        if weightedEdges and not isNondecreasingArray(times): continue
         date = record[2]
         endpoint = route[-1].split("/")[0]
         route_length = len(route)
@@ -92,27 +117,39 @@ def generateIntervalData(start, end, remCur, dataFolder : str, verbose : bool):
                 srcAddress = src.split("/")[0]
                 destAddress = dest.split("/")[0]
 
+                # If the source address isn't in graph yet, add it
                 if(srcAddress not in addressToVertex):
                     srcNode = g.add_vertex()
                     addressToVertex[srcAddress] = srcNode
                     VertexToAddress[srcNode] = srcAddress
                     ipAddress[srcNode] = srcAddress
+                    minNodeDistance[srcNode] = times[i - 1]
+                    maxNodeDistance[srcNode] = times[i - 1]
                 else:
                     srcNode = addressToVertex[srcAddress]
+                    if times[i - 1] < minNodeDistance[srcNode]: minNodeDistance[srcNode] = times[i - 1]
+                    if times[i - 1] > maxNodeDistance[srcNode]: maxNodeDistance[srcNode] = times[i - 1]
 
+                # If the destination address isn't in graph yet, add it
                 if(destAddress not in addressToVertex):
                     destNode = g.add_vertex()
                     addressToVertex[destAddress] = destNode
                     VertexToAddress[destNode] = destAddress
                     ipAddress[destNode] = destAddress
+                    minNodeDistance[destNode] = times[i]
+                    maxNodeDistance[destNode] = times[i]
                 else:
                     destNode = addressToVertex[destAddress]
+                    if times[i] < minNodeDistance[destNode]: minNodeDistance[destNode] = times[i]
+                    if times[i] > maxNodeDistance[destNode]: maxNodeDistance[destNode] = times[i]
 
                 # Add edge if it doesn't exist
                 if (srcAddress, destAddress) not in existingEdges.keys():
                     edge = g.add_edge(addressToVertex[srcAddress], addressToVertex[destAddress])
                     existingEdges[(srcAddress, destAddress)] = edge
                     traversalsNum[edge] = 1
+                    if weightedEdges:
+                        minEdgeWeight[edge] = times[i] - (times[i - 1] if i > 0 else 0)
                 # Update edge's weights if it does exist
                 else:
                     edge = existingEdges[(srcAddress, destAddress)]
@@ -125,22 +162,35 @@ def generateIntervalData(start, end, remCur, dataFolder : str, verbose : bool):
                 # Add distance to node
                 nodeDistances[destNode].append(times[i])
 
+                if weightedEdges:
+                    edgeWeight = times[i] - (times[i - 1] if i > 0 else 0)
+                    edgeWeights[edge].append(edgeWeight)
+                    if edgeWeight > float(maxEdgeWeight[edge]): maxEdgeWeight[edge] = edgeWeight
+                    if edgeWeight < float(minEdgeWeight[edge]): minEdgeWeight[edge] = edgeWeight
+
         # Check if we had the date before
         date = date.date()
         if date not in routeDates:
             routeDates.add(date)
 
+    if weightedEdges:
+        for e in g.edges():
+            avgEdgeWeight[e] = sum(edgeWeights[e]) / len(edgeWeights[e])
+
     metadata = g.new_graph_property("string")
     g.gp["metadata"] = metadata
     g.gp["metadata"] = dumps({"date": start,
-                              "routeDates": [getDateString(date) for date in routeDates]})
+                              "routeDates": [getDateString(date) for date in routeDates],
+                              "weightedEdges": weightedEdges})
+    dataFolder = dataFolder + f"/{'base' if not weightedEdges else 'weighted'}"
+    if not os.path.exists(dataFolder): os.makedirs(dataFolder)
     g.save(f"{dataFolder}/{start}.gt")
     if verbose:
-        print(f"Generated graph for week starting with {start}.")
+        print(f"Generated{' weighted' if weightedEdges else ''} graph for week starting with {start}.")
         print(f"Number of vertices: {g.num_vertices()}\nNumber of edges: {g.num_edges()}")
 
 # For each week, generate a graph using generateOutput()
-def generateWeeklyData(start: datetime.date, end: datetime.date, verbose: bool, numThreads: int = 1):
+def generateWeeklyData(start: datetime.date, end: datetime.date, verbose: bool, weightedEdges : bool = False):
     # Database connection setup
     remConn = psycopg2.connect("dbname=" + os.environ["IP_DBNAME"] + " user=" + os.environ["IP_USER"] + " password=" + os.environ["IP_PASSWORD"] + " host=" + os.environ["IP_HOST"])
     remCur = remConn.cursor()
@@ -151,7 +201,7 @@ def generateWeeklyData(start: datetime.date, end: datetime.date, verbose: bool, 
 
     weeks = getWeekDates(start, end)
     for week in weeks:
-        generateIntervalData(week[0], week[0] + timedelta(days=7), remCur, dataFolder, verbose)
+        generateIntervalData(week[0], week[0] + timedelta(days=7), remCur, dataFolder, verbose, weightedEdges)
 
     remCur.close()
     remConn.close()
@@ -164,7 +214,7 @@ def main(args = None):
     parser.add_argument("-t", "--time",
                         help="Generates a graph only for the aforementioned time interval which includes the given date.")
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
-    parser.add_argument("t", "--threads", type=int)
+    parser.add_argument("-w", "--weightedEdges", action="store_true", help="Use edge weights")
 
     if args == None: args = parser.parse_args()
     else: args = parser.parse_args(args)
@@ -177,6 +227,6 @@ def main(args = None):
     else:
         start, end = getDatabaseRange()
 
-    generateWeeklyData(start, end, args.verbose, args.threads)
+    generateWeeklyData(start, end, args.verbose, args.weightedEdges)
 
 if __name__ == "__main__": main()
