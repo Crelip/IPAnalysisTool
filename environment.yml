@@ -14,3 +14,6 @@ dependencies:
   - jupyter
   - scikit-learn
   - statsmodels
+  - pip
+  - pip:
+      - ipwhois

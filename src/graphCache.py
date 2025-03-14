@@ -16,6 +16,7 @@ import os
 import graph_tool.all as gt
 from typing import Tuple
 from util.weekUtil import getWeek, getWeekDates, getDateString
+from util.whoisUtil import WhoIs
 from json import dumps
 from sortedcontainers import SortedSet
 
@@ -63,6 +64,8 @@ def generateIntervalData(start, end, remCur, dataFolder : str, verbose : bool, w
     minNodeDistance = g.new_vertex_property("float")
     maxNodeDistance = g.new_vertex_property("float")
     avgNodeDistance = g.new_vertex_property("float")
+    nodeProperties = g.new_vertex_property("string")
+
     g.edge_properties['traversals'] = traversalsNum
     g.vertex_properties['ip'] = ipAddress
     g.vertex_properties['positionInRoute'] = positionInRoute
@@ -70,7 +73,9 @@ def generateIntervalData(start, end, remCur, dataFolder : str, verbose : bool, w
     g.vertex_properties['minDistance'] = minNodeDistance
     g.vertex_properties['maxDistance'] = maxNodeDistance
     g.vertex_properties['avgDistance'] = avgNodeDistance
+    g.vertex_properties['properties'] = nodeProperties
 
+    who = WhoIs()
     addressToVertex = {}
     VertexToAddress = {}
 
@@ -125,6 +130,7 @@ def generateIntervalData(start, end, remCur, dataFolder : str, verbose : bool, w
                     ipAddress[srcNode] = srcAddress
                     minNodeDistance[srcNode] = times[i - 1]
                     maxNodeDistance[srcNode] = times[i - 1]
+                    nodeProperties[srcNode] = who.lookup(srcAddress)
                 else:
                     srcNode = addressToVertex[srcAddress]
                     if times[i - 1] < minNodeDistance[srcNode]: minNodeDistance[srcNode] = times[i - 1]
@@ -138,6 +144,7 @@ def generateIntervalData(start, end, remCur, dataFolder : str, verbose : bool, w
                     ipAddress[destNode] = destAddress
                     minNodeDistance[destNode] = times[i]
                     maxNodeDistance[destNode] = times[i]
+                    nodeProperties[destNode] = who.lookup(destAddress)
                 else:
                     destNode = addressToVertex[destAddress]
                     if times[i] < minNodeDistance[destNode]: minNodeDistance[destNode] = times[i]
@@ -188,6 +195,7 @@ def generateIntervalData(start, end, remCur, dataFolder : str, verbose : bool, w
     if verbose:
         print(f"Generated{' weighted' if weightedEdges else ''} graph for week starting with {start}.")
         print(f"Number of vertices: {g.num_vertices()}\nNumber of edges: {g.num_edges()}")
+    who.close()
 
 # For each week, generate a graph using generateOutput()
 def generateWeeklyData(start: datetime.date, end: datetime.date, verbose: bool, weightedEdges : bool = False):
