@@ -52,7 +52,26 @@ def getDatabaseRange() -> Tuple[datetime.date, datetime.date]:
     return earliestDate, latestDate
 
 # Generates a graph based on all data from start date to end date
-def generateIntervalData(start, end, remCur, dataFolder : str, verbose : bool, weightedEdges : bool = False):
+def generateIntervalData(start, end, remCur, dataFolder : str, verbose : bool, weightedEdges : bool = False, collectMetadata : bool = False):
+
+    # Adding a node to the graph
+    def addNode(g, address, times, i, endpoint):
+        if address not in addressToVertex:
+            node = g.add_vertex()
+            addressToVertex[address] = node
+            VertexToAddress[node] = address
+            ipAddress[node] = address
+            minNodeDistance[node] = times[i]
+            maxNodeDistance[node] = times[i]
+            if collectMetadata: nodeProperties[node] = who.lookup(address)
+        else:
+            node = addressToVertex[address]
+            if times[i] < minNodeDistance[node]: minNodeDistance[node] = times[i]
+            if times[i] > maxNodeDistance[node]: maxNodeDistance[node] = times[i]
+        if address == endpoint:
+            positionInRoute[node] = 2
+        return node
+
     start = datetime.strftime(start, '%Y-%m-%d')
     end = datetime.strftime(end, '%Y-%m-%d')
 
@@ -124,31 +143,12 @@ def generateIntervalData(start, end, remCur, dataFolder : str, verbose : bool, w
 
                 # If the source address isn't in graph yet, add it
                 if(srcAddress not in addressToVertex):
-                    srcNode = g.add_vertex()
+                    srcNode = addNode(g, srcAddress, times, i - 1, endpoint)
                     addressToVertex[srcAddress] = srcNode
-                    VertexToAddress[srcNode] = srcAddress
-                    ipAddress[srcNode] = srcAddress
-                    minNodeDistance[srcNode] = times[i - 1]
-                    maxNodeDistance[srcNode] = times[i - 1]
-                    nodeProperties[srcNode] = who.lookup(srcAddress)
-                else:
-                    srcNode = addressToVertex[srcAddress]
-                    if times[i - 1] < minNodeDistance[srcNode]: minNodeDistance[srcNode] = times[i - 1]
-                    if times[i - 1] > maxNodeDistance[srcNode]: maxNodeDistance[srcNode] = times[i - 1]
-
                 # If the destination address isn't in graph yet, add it
                 if(destAddress not in addressToVertex):
-                    destNode = g.add_vertex()
+                    destNode = addNode(g, destAddress, times, i, endpoint)
                     addressToVertex[destAddress] = destNode
-                    VertexToAddress[destNode] = destAddress
-                    ipAddress[destNode] = destAddress
-                    minNodeDistance[destNode] = times[i]
-                    maxNodeDistance[destNode] = times[i]
-                    nodeProperties[destNode] = who.lookup(destAddress)
-                else:
-                    destNode = addressToVertex[destAddress]
-                    if times[i] < minNodeDistance[destNode]: minNodeDistance[destNode] = times[i]
-                    if times[i] > maxNodeDistance[destNode]: maxNodeDistance[destNode] = times[i]
 
                 # Add edge if it doesn't exist
                 if (srcAddress, destAddress) not in existingEdges.keys():
@@ -162,9 +162,6 @@ def generateIntervalData(start, end, remCur, dataFolder : str, verbose : bool, w
                     edge = existingEdges[(srcAddress, destAddress)]
                     # Increment number of traversals
                     traversalsNum[edge] += 1
-                
-                if destAddress == endpoint:
-                    positionInRoute[destNode] = 2
 
                 # Add distance to node
                 nodeDistances[destNode].append(times[i])
@@ -198,7 +195,7 @@ def generateIntervalData(start, end, remCur, dataFolder : str, verbose : bool, w
     who.close()
 
 # For each week, generate a graph using generateOutput()
-def generateWeeklyData(start: datetime.date, end: datetime.date, verbose: bool, weightedEdges : bool = False):
+def generateWeeklyData(start: datetime.date, end: datetime.date, verbose: bool, weightedEdges : bool = False, collectMetadata : bool = False):
     # Database connection setup
     remConn = psycopg2.connect("dbname=" + os.environ["IP_DBNAME"] + " user=" + os.environ["IP_USER"] + " password=" + os.environ["IP_PASSWORD"] + " host=" + os.environ["IP_HOST"])
     remCur = remConn.cursor()
@@ -223,7 +220,7 @@ def main(args = None):
                         help="Generates a graph only for the aforementioned time interval which includes the given date.")
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
     parser.add_argument("-w", "--weightedEdges", action="store_true", help="Use edge weights")
-
+    parser.add_argument("-m", "--metadata", action="store_true", help="Collect information about each IP address from WHOIS. May take a very long time.")
     if args == None: args = parser.parse_args()
     else: args = parser.parse_args(args)
 
@@ -235,6 +232,6 @@ def main(args = None):
     else:
         start, end = getDatabaseRange()
 
-    generateWeeklyData(start, end, args.verbose, args.weightedEdges)
+    generateWeeklyData(start, end, args.verbose, args.weightedEdges, args.metadata)
 
 if __name__ == "__main__": main()
