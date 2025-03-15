@@ -15,8 +15,9 @@ import psycopg2
 import os
 import graph_tool.all as gt
 from typing import Tuple
-from util.weekUtil import getWeek, getWeekDates, getDateString
-from util.whoisUtil import WhoIs
+from ..util.weekUtil import getWeek, getWeekDates, getDateString
+from ..util.whoisUtil import WhoIs
+from ..util.databaseUtil import connectToRemoteDB
 from json import dumps
 from sortedcontainers import SortedSet
 
@@ -33,8 +34,7 @@ def isNondecreasingArray(arr):
 # Gets the earliest and latest date in the database
 def getDatabaseRange() -> Tuple[datetime.date, datetime.date]:
     # Database connection setup
-    remConn = psycopg2.connect("dbname=" + os.environ["IP_DBNAME"] + " user=" + os.environ["IP_USER"] + " password=" + os.environ["IP_PASSWORD"] + " host=" + os.environ["IP_HOST"])
-    remCur = remConn.cursor()
+    remConn, remCur = connectToRemoteDB()
 
     # Get the earliest date
     remCur.execute("SELECT MIN(t_date) FROM topology")
@@ -197,8 +197,7 @@ def generateIntervalData(start, end, remCur, dataFolder : str, verbose : bool, w
 # For each week, generate a graph using generateOutput()
 def generateWeeklyData(start: datetime.date, end: datetime.date, verbose: bool, weightedEdges : bool = False, collectMetadata : bool = False):
     # Database connection setup
-    remConn = psycopg2.connect("dbname=" + os.environ["IP_DBNAME"] + " user=" + os.environ["IP_USER"] + " password=" + os.environ["IP_PASSWORD"] + " host=" + os.environ["IP_HOST"])
-    remCur = remConn.cursor()
+    remConn, remCur = connectToRemoteDB()
 
     dataFolder : str = os.path.expanduser("~/.cache/IPAnalysisTool/graphs/week")
     if not os.path.exists(dataFolder):

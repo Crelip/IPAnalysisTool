@@ -2,11 +2,11 @@ import sqlite3
 from datetime import datetime
 import json
 from os.path import expanduser
+from ..util.databaseUtil import connectToLocalDB
 
 class WhoIsDatabase:
-    def __init__(self, db_path=expanduser("~/.cache/IPAnalysisTool/whois_data.db")):
-        self.conn = sqlite3.connect(db_path)
-        self.cursor = self.conn.cursor()
+    def __init__(self):
+        self.conn, self.cursor = connectToLocalDB()
         self._create_table()
 
     def _create_table(self):
