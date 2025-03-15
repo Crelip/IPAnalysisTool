@@ -21,7 +21,7 @@ from json import dumps
 from sortedcontainers import SortedSet
 
 # Load environment variables
-load_dotenv()
+load_dotenv(override=True)
 
 def isNondecreasingArray(arr):
     size = len(arr)
@@ -33,7 +33,7 @@ def isNondecreasingArray(arr):
 # Gets the earliest and latest date in the database
 def getDatabaseRange() -> Tuple[datetime.date, datetime.date]:
     # Database connection setup
-    remConn = psycopg2.connect("dbname=" + os.environ["RP_DBNAME"] + " user=" + os.environ["RP_USER"] + " password=" + os.environ["RP_PASSWORD"] + " host=" + os.environ["RP_HOST"])
+    remConn = psycopg2.connect("dbname=" + os.environ["IP_DBNAME"] + " user=" + os.environ["IP_USER"] + " password=" + os.environ["IP_PASSWORD"] + " host=" + os.environ["IP_HOST"])
     remCur = remConn.cursor()
 
     # Get the earliest date
