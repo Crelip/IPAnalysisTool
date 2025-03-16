@@ -1,20 +1,14 @@
 import graph_tool.all as gt
 import datetime
 
-from util.graphGetter import getGraphByDate
-from util.calculations import getHIndex
-from util.graphManipulation import addInverseEP
-from visualize import baseVisualize
-
+from .util.graphGetter import getGraphByDate
+from .util.calculations import getHIndex
+from .visualize import baseVisualize
 
 # Get bridge of the network
-def addBridge(g: gt.Graph, modifier):
-    inverse = g.new_edge_property("float")
-    g.edge_properties["minEdgeInverse"] = inverse
+def addBridge(g: gt.Graph, modifier = 1):
     bridge = g.new_edge_property("double")
     g.edge_properties["bridge"] = bridge
-    for e in g.edges():
-        inverse[e] = 1 / g.ep.minEdge[e]
     vertexBetweenness, edgeBetweenness = gt.betweenness(g)
     edgeBetweenness = {e: edgeBetweenness[e] for e in g.edges()}
     # print(g.num_vertices())
@@ -24,51 +18,31 @@ def addBridge(g: gt.Graph, modifier):
     vertexAmount = g.num_vertices()
     # Modified bridge measurement
     for e in g.edges():
-        bridge[e] = edgeBetweenness[e] / vertexAmount * modifier
+        bridge[e] = (edgeBetweenness[e] / vertexAmount) * modifier
     return g
-    # Bridge measurement
-    # return {e: edgeBetweenness[e] / vertexAmount for e in g.edges()}
-
-
-# Get H-Bridge of the network
-def getHBridge(g: gt.Graph, bridge=None) -> int:
-    if bridge == None: bridge = addBridge(g).ep.bridge
-    # H-Bridge calculation using h-index algorithm
-    return getHIndex(g, bridge, count=g.num_edges())
-
-
-def getHStrength(g: gt.Graph, inv) -> int:
-    # H-strength calculation using h-index algorithm
-    return getHIndex(g, inv, count=g.num_edges())
-
 
 # Get H-Backbone of the network
-def hBackbone(date: datetime.date, **kwargs):
-    modifier = kwargs.get("modifier") or 1000000000
-    print(modifier)
-    visualize = kwargs.get("visualize", False)
-    g: gt.Graph = getGraphByDate(date)
-    g = addInverseEP(g)
+def hBackbone(date: datetime.date,
+              modifier = 1,
+              visualize = False,
+              weighted = False,
+              output = "json",
+              verbose = False):
+
+    g: gt.Graph = getGraphByDate(date, weightedEdges=weighted)
+    g = gt.GraphView(g, directed=False)
     g = addBridge(g, modifier)
     bridge = g.ep.bridge
-    # for e in g.edges(): print(bridge[e])
     # H-Bridge calculation
     HStrengthProperty = g.ep.traversals
-    HBridge: int = getHBridge(g, bridge)
-    HStrength: int = getHStrength(g, HStrengthProperty)
+    HBridge: int = getHIndex(g, bridge)
+    HStrength: int = getHIndex(g, HStrengthProperty)
     hEdges = set()
-    # print(HBridge)
-    # print(HStrength)
-    for e in g.edges():
-        if bridge[e] >= HBridge:
-            hEdges.add(e)
-        if HStrengthProperty[e] >= HStrength:
-            hEdges.add(e)
-
-    # Filter out the graph
     efilt = g.new_ep("bool", vals=[False] * g.num_edges())
-    for e in hEdges:
-        efilt[e] = True
+    if verbose:
+        print("HBridge: ", HBridge)
+        print("Hstrength: ", HStrength)
+    for e in g.edges(): efilt[e] = ((bridge[e] >= HBridge) or (HStrengthProperty[e] >= HStrength))
     vfilt = g.new_vp("bool", vals=[False] * g.num_vertices())
     for v in g.vertices():
         vfilt[v] = any([efilt[e] for e in v.all_edges()])
@@ -76,7 +50,6 @@ def hBackbone(date: datetime.date, **kwargs):
 
     # Visualize the graph
     if visualize: baseVisualize(hBackbone, f"{datetime.datetime.strftime(date, "%Y-%m-%d")}-h")
-    output = kwargs.get("output", "json")
     return {
         "date": datetime.datetime.strftime(date, "%Y-%m-%d"),
         "HBridge": HBridge,
@@ -95,9 +68,13 @@ if __name__ == "__main__":
     from json import dumps
 
     parser = ArgumentParser()
+    import sys
     parser.add_argument("-d", "--date", help="Generates data for the week containing the given date.")
-    parser.add_argument("-v", "--visualize", action="store_true", help="Visualizes the graph.")
+    parser.add_argument("-s", "--visualize", action="store_true", help="Visualizes the graph.")
     parser.add_argument("-m", "--modifier", type=int, help="Modifier for the bridge calculation.")
+    parser.add_argument("-w", "--weightedEdges", action="store_true", help="Use graph with weighted edges.")
+    parser.add_argument("-v", "--verbose", action="store_true", help="Prints the output.")
     args = parser.parse_args()
-    hBackbone(datetime.datetime.strptime(args.date, "%Y-%m-%d").date(), modifier=args.modifier, visualize=args.visualize)
+    modifier = args.modifier or 1
+    hBackbone(datetime.datetime.strptime(args.date, "%Y-%m-%d").date(), modifier=modifier, visualize=args.visualize, weighted=args.weightedEdges, verbose=args.verbose)
     # print(dumps(hBackbone(datetime.datetime.strptime(args.date, "%Y-%m-%d").date(), modifier=args.modifier, visualize=args.visualize), indent=2))
