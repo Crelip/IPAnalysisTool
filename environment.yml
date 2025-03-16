@@ -8,8 +8,8 @@ dependencies:
   - python=3.13
   - graph-tool=2.84
   - psycopg2=2.9.9
-  - python-dotenv=0.21.0
   - sortedcontainers=2.4.0
+  - pyyaml=6.0.2
   - pandas
   - jupyter
   - scikit-learn

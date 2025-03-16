@@ -9,7 +9,6 @@
 # -e: If this flag is given, the program does not overwrite existing data.
 # -c [filename]: Uses a custom config file. Default config file: $HOME/.config/IPAnalysisTool/config.conf 
 
-from dotenv import load_dotenv
 from datetime import datetime, timedelta
 import os
 import graph_tool.all as gt
@@ -19,9 +18,6 @@ from ..util.whoisUtil import WhoIs
 from ..util.databaseUtil import connectToRemoteDB
 from json import dumps
 from sortedcontainers import SortedSet
-
-# Load environment variables
-load_dotenv(override=True)
 
 def isNondecreasingArray(arr):
     size = len(arr)
