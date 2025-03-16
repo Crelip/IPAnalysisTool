@@ -11,7 +11,7 @@
 
 from datetime import datetime, timedelta
 import os
-import graph_tool.all as gt
+from graph_tool import Graph
 from typing import Tuple
 from ..util.weekUtil import getWeek, getWeekDates, getDateString
 from ..util.whoisUtil import WhoIs
@@ -70,7 +70,7 @@ def generateIntervalData(start, end, remCur, dataFolder : str, verbose : bool, w
     start = datetime.strftime(start, '%Y-%m-%d')
     end = datetime.strftime(end, '%Y-%m-%d')
 
-    g = gt.Graph(directed=True)
+    g = Graph(directed=True)
     traversalsNum = g.new_edge_property("int")
     ipAddress = g.new_vertex_property("string")
     positionInRoute = g.new_vertex_property("int") # 1 - start, 2 - end

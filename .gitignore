@@ -12,3 +12,7 @@ scratchpad/
 
 # IDE
 .idea/
+
+# Build
+build/
+dist/
