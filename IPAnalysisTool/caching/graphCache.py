@@ -112,12 +112,14 @@ def generateIntervalData(start, end, remCur, dataFolder : str, verbose : bool, w
     positionInRoute[node] = 1
     nodeDistances[node] = [0]
 
-    remCur.execute(f"""SELECT t_route, t_roundtrip, t_date FROM topology
-                   WHERE NOT ('0.0.0.0/32' = ANY(t_route))
-                   AND t_status = 'C'
-                   AND t_date >= '{start}'
-                   AND t_date < '{end}'
-                   AND t_hops > 1""")
+    remCur.execute(f"""
+                    SELECT t_route, t_roundtrip, t_date FROM topology t JOIN non_reserved_ip n ON n.ip_addr = t.ip_addr
+                       WHERE NOT ('0.0.0.0/32' = ANY(t_route))
+                       AND t_status = 'C'
+                       AND t_date >= '{start}'
+                       AND t_date < '{end}'
+                       AND t_hops > 1
+""")
 
     existingEdges = {}
     routeDates = SortedSet()
@@ -198,6 +200,36 @@ def generateWeeklyData(start: datetime.date, end: datetime.date, verbose: bool, 
     if not os.path.exists(dataFolder):
         os.makedirs(dataFolder)
 
+    # Create a table of non-reserved IP addresses
+    remCur.execute("""CREATE TEMPORARY TABLE non_reserved_ip AS
+                       (SELECT h.ip_addr AS ip_addr FROM hosts h WHERE
+                       NOT (h.ip_addr <<= '0.0.0.0/8' 
+                       OR h.ip_addr <<= '0.0.0.0/32' 
+                       OR h.ip_addr <<= '10.0.0.0/8' 
+                        OR h.ip_addr <<= '100.64.0.0/10'
+                        OR h.ip_addr <<= '127.0.0.0/8' 
+                        OR h.ip_addr <<= '169.254.0.0/16' 
+                        OR h.ip_addr <<= '172.16.0.0/12' 
+                        OR h.ip_addr <<= '192.0.2.0/24' 
+                        OR h.ip_addr <<= '192.88.99.0/24' 
+                       OR h.ip_addr  <<= '192.88.99.2/32' 
+                       OR h.ip_addr <<= '192.168.0.0/16' 
+                        OR h.ip_addr <<= '192.0.0.0/24' 
+                       OR h.ip_addr  <<= '198.18.0.0/15' 
+                       OR h.ip_addr  <<= '198.51.100.0/24' 
+                       OR h.ip_addr <<= '203.0.113.0/24' 
+                       OR h.ip_addr <<= '255.255.255.255/32'
+                        ) AND (
+                            EXISTS (
+                                SELECT *
+                                FROM topology t
+                                WHERE t.ip_addr = h.ip_addr
+                                AND t.t_status = 'C'
+                            )
+                        )
+                    )"""
+                   )
+    if verbose: print("Created non_reserved_ip table.")
     weeks = getWeekDates(start, end)
     for week in weeks:
         generateIntervalData(week[0], week[0] + timedelta(days=7), remCur, dataFolder, verbose, weightedEdges)
