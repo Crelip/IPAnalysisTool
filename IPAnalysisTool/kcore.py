@@ -18,8 +18,6 @@ def kCoreDecomposition(g: gt.Graph, **kwargs):
     output = kwargs.get("output") or "json"
     # Do k-core decomposition on an undirected version of the graph
     g = removeReciprocalEdges(g)
-    from .visualize import baseVisualize
-    baseVisualize(g, "xd")
     kCore = gt.kcore_decomposition(g)
     groups = defaultdict(list)
     metadata = loads(g.gp.metadata)
@@ -39,7 +37,7 @@ def kCoreDecomposition(g: gt.Graph, **kwargs):
             } for i in range(maxK + 1) if i in groups.keys()
         ]
     } if output == "json" \
-        else [g, kCore, getDateObject(metadata["date"])] \
+        else [g, kCore, getDateObject(metadata["date"]), maxK] \
         if output == "graph" \
         else None
     return result

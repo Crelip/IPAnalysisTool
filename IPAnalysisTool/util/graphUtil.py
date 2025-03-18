@@ -1,4 +1,6 @@
-from graph_tool import Graph
+from graph_tool import Graph, VertexPropertyMap
+
+
 def mapVerticesByProperty(g1: Graph, g2: Graph, property: str = "ip") -> dict:
     g1_prop = g1.vertex_properties[property]
     g2_prop = g2.vertex_properties[property]
@@ -13,3 +15,6 @@ def mapVerticesByProperty(g1: Graph, g2: Graph, property: str = "ip") -> dict:
             mapping[v] = ip_to_vertex[ip_val]
 
     return mapping
+
+def get_address_node_map(graph: Graph) -> dict:
+    return {graph.vp.ip[v] : v for v in graph.vertices()}

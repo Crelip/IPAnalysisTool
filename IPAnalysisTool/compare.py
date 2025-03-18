@@ -1,8 +1,4 @@
 import graph_tool.all as gt
-from graph_tool.topology import similarity
-
-from hBackbone import hBackbone
-from kcore import kcoreDecomposition
 from datetime import date
 
 def edgeRepr(e, ipProp):
@@ -10,9 +6,12 @@ def edgeRepr(e, ipProp):
     tgt = ipProp[e.target()]
     return tuple(sorted([src, tgt]))
 
+# About to deprecate this function, redundant code
 def compareKCoreAndHBackbone(datetime: date):
+    from hBackbone import hBackbone
+    from kcore import kCoreDecompositionFromDate
     hBackboneGraph = hBackbone(datetime, output="graph")
-    kCoreData = kcoreDecomposition(datetime, output="graph")
+    kCoreData = kCoreDecompositionFromDate(datetime, output="graph")
     print(kCoreData)
     kCoreGraph, kCore = kCoreData[0], kCoreData[1]
     maxK = max(kCore[v] for v in kCoreGraph.vertices())
@@ -41,6 +40,23 @@ def compareKCoreAndHBackbone(datetime: date):
             "similarity": similarity
         }
     return result
+
+def compareGraphsJaccard(g1: gt.Graph, g2: gt.Graph):
+    # Apply Jaccard index for edges
+    edges1 = {edgeRepr(e, g1.vp.ip) for e in g1.edges()}
+    edges2 = {edgeRepr(e, g2.vp.ip) for e in g2.edges()}
+    edgesInIntersection = edges1.intersection(edges2)
+    edgesInUnion = edges1.union(edges2)
+    similarity = len(edgesInIntersection) / len(edgesInUnion)
+    return {
+        "verticesInG1": g1.num_vertices(),
+        "edgesInG1": g1.num_edges(),
+        "verticesInG2": g2.num_vertices(),
+        "edgesInG2": g2.num_edges(),
+        "intersection": len(edgesInIntersection),
+        "union": len(edgesInUnion),
+        "similarity": similarity
+    }
 
 if __name__ == "__main__":
     from argparse import ArgumentParser

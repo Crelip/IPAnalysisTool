@@ -13,7 +13,7 @@ def removeReciprocalEdges(g: Graph):
         u = e.source()
         v = e.target()
         # Check if the reciprocal edge was already added.
-        if (v, u) in added:
+        if (v, u) in added or (u, v) in added:
             continue
         # Otherwise, add this edge and mark the pair.
         g_new.add_edge(u, v)
@@ -84,7 +84,8 @@ def continousSubgraph(disconnected_graph : Graph, base_graph : Graph, weight = N
         current = v
         while current != u:
             pred = pred_maps[u][current]
-            if pred is None or pred == -1:
+            if pred is None or pred == -1 or pred == current:
+                print("Something went wrong")
                 break
             path.append((pred, current))
             current = pred
@@ -136,5 +137,27 @@ def continousSubgraph(disconnected_graph : Graph, base_graph : Graph, weight = N
     for e in disconnected_graph.edges():
         final_subgraph.add_edge(disconnected_final_map[e.source()], disconnected_final_map[e.target()])
 
+    return removeReciprocalEdges(final_subgraph)
 
-    return final_subgraph
+def mergeSubgraphs(disconnected_graph_1 : Graph, disconnected_graph_2 : Graph, base_graph : Graph) -> Graph:
+    from .graphUtil import get_address_node_map
+    disconnected_graph = Graph(directed = False)
+    disconnected_graph.vp["ip"] = disconnected_graph.new_vertex_property("string")
+    addresses = set()
+    addresses.update(disconnected_graph_1.vp["ip"][v] for v in disconnected_graph_1.vertices())
+    addresses.update(disconnected_graph_2.vp["ip"][v] for v in disconnected_graph_2.vertices())
+    for address in addresses:
+        new_vertex = disconnected_graph.add_vertex()
+        disconnected_graph.vp["ip"][new_vertex] = address
+    vertex_map = get_address_node_map(disconnected_graph)
+    for e in disconnected_graph_1.edges():
+        disconnected_graph.add_edge(
+            vertex_map[disconnected_graph_1.vp.ip[e.source()]],
+            vertex_map[disconnected_graph_1.vp.ip[e.target()]]
+        )
+    for e in disconnected_graph_2.edges():
+        disconnected_graph.add_edge(
+            vertex_map[disconnected_graph_2.vp.ip[e.source()]],
+            vertex_map[disconnected_graph_2.vp.ip[e.target()]]
+        )
+    return continousSubgraph(disconnected_graph, base_graph)
