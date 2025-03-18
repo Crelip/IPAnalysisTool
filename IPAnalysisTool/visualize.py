@@ -1,16 +1,16 @@
 import graph_tool.all as gt
 import pandas as pd
 import matplotlib.pyplot as plt
-def baseVisualize(g: gt.Graph, name: str):
+def baseVisualize(g: gt.Graph, name: str, prop: str = "ip"):
     gt.graph_draw(g,
             gt.sfdp_layout(g),
             output_size=(10000,10000),
-            vertex_text=g.vp.ip,
+            vertex_text=g.vertex_index if prop== "vertex_index" else g.vp[prop],
             vertex_font_size=8,
             vertex_size=6,
             edge_pen_width=2.0,
             bg_color=[1,1,1,1],
-            output=f"scratchpad/{name}.png"
+            output=f"scratchpad/{name}.svg"
                   )
 
 def visualizeChart(data, xCharacteristic, yCharacteristic, xLabel, yLabel, title):
