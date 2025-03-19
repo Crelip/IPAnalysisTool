@@ -256,8 +256,8 @@ def main(args = None):
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
     parser.add_argument("-w", "--weightedEdges", action="store_true", help="Use edge weights")
     parser.add_argument("-m", "--metadata", action="store_true", help="Collect information about each IP address from WHOIS. May take a very long time.")
-    if args == None: args = parser.parse_args()
-    else: args = parser.parse_args(args)
+
+    args = parser.parse_args(args)
 
     if args.interval:
         start = getWeek(datetime.strptime(args.interval[0], "%Y-%m-%d"))[0]

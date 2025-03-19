@@ -1,9 +1,8 @@
-import graph_tool.all as gt
-import pandas as pd
-import matplotlib.pyplot as plt
-def baseVisualize(g: gt.Graph, name: str, prop: str = "ip"):
-    gt.graph_draw(g,
-            gt.sfdp_layout(g),
+from graph_tool import Graph
+def baseVisualize(g: Graph, name: str, prop: str = "ip"):
+    from graph_tool.all import graph_draw, sfdp_layout
+    graph_draw(g,
+            sfdp_layout(g),
             output_size=(10000,10000),
             vertex_text=g.vertex_index if prop== "vertex_index" else g.vp[prop],
             vertex_font_size=8,
@@ -14,6 +13,7 @@ def baseVisualize(g: gt.Graph, name: str, prop: str = "ip"):
                   )
 
 def visualizeChart(data, xCharacteristic, yCharacteristic, xLabel, yLabel, title):
+    import matplotlib.pyplot as plt
     # Create figure and axes
     fig, ax = plt.subplots(figsize=(10, 6))
     ax.plot(data[xCharacteristic], data[yCharacteristic], marker="o", linestyle="-")

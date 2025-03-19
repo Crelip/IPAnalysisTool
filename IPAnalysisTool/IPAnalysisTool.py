@@ -6,6 +6,9 @@ def main():
     elif sys.argv[1] == "timeSeriesAnalysis":
         from timeSeriesAnalysis import main as timeSeriesAnalysis
         timeSeriesAnalysis(sys.argv[2:])
+    elif sys.argv[1] == "hBackbone":
+        from IPAnalysisTool.hBackbone import main as hBackbone
+        hBackbone(sys.argv[2:])
     else:
         print("""Welcome to IPAnalysisTool!
         In order to use its features, you must provide other arguments.""")
