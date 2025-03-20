@@ -87,7 +87,7 @@ def disparityFilter(g : Graph, percentileThreshold = 50.0):
 def main():
     from argparse import ArgumentParser
     from IPAnalysisTool.util.graphGetter import getGraphByDate
-    from IPAnalysisTool.visualize import baseVisualize
+    from IPAnalysisTool.visualize import visualize_graph
     from IPAnalysisTool.util.weekUtil import getDateObject
     parser = ArgumentParser()
     parser.add_argument("-d", "--date", help="Date to process", type=str)
@@ -96,7 +96,7 @@ def main():
     args = parser.parse_args()
     g = disparityFilter(getGraphByDate(getDateObject(args.date)), args.percentile)
     print(g.num_vertices())
-    baseVisualize(g, f"disparity_{args.date}")
+    visualize_graph(g, f"disparity_{args.date}")
 
 if __name__ == "__main__":
     main()

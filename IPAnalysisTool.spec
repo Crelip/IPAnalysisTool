@@ -1,11 +1,13 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+from PyInstaller.utils.hooks import collect_data_files
+datas = collect_data_files('mpl_toolkits')
 
 a = Analysis(
     ['IPAnalysisTool/IPAnalysisTool.py'],
     pathex=[],
     binaries=[],
-    datas=[],
+    datas=datas,
     hiddenimports=[
         'graph_tool.centrality.libgraph_tool_centrality',
         'graph_tool.clustering.libgraph_tool_clustering',
@@ -20,13 +22,14 @@ a = Analysis(
         'graph_tool.stats.libgraph_tool_stats',
         'graph_tool.topology.libgraph_tool_topology',
         'graph_tool.util.libgraph_tool_util',
+        'scipy._lib.array_api_compat.numpy.fft',
+        'scipy.special._special_ufuncs'
     ],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
     excludes=[],
     noarchive=False,
-    optimize=0,
 )
 pyz = PYZ(a.pure)
 

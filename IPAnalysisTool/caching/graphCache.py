@@ -107,7 +107,7 @@ def generate_interval_data(start, end, rem_cur, data_folder : str, verbose : boo
         g.edge_properties['minWeight'] = min_edge_weight
 
     # Adding starting IP address
-    starting_address = "localhost"
+    starting_address = "127.0.0.1"
     node = g.add_vertex()
     address_to_vertex[starting_address] = node
     vertex_to_address[node] = starting_address
@@ -134,7 +134,7 @@ def generate_interval_data(start, end, rem_cur, data_folder : str, verbose : boo
         date = record[2]
         endpoint = route[-1].split("/")[0]
         route_length = len(route)
-        g.vp.routes[address_to_vertex["localhost"]].append(route_index)
+        g.vp.routes[address_to_vertex["127.0.0.1"]].append(route_index)
         for i in range(route_length):
             if i == 0: src, dest = starting_address, route[i]
             else: src, dest = route[i - 1], route[i]

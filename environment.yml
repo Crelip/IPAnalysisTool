@@ -5,16 +5,19 @@ channels:
   - https://repo.anaconda.com/pkgs/main
   - https://repo.anaconda.com/pkgs/r
 dependencies:
-  - python=3.13
-  - graph-tool=2.84
-  - psycopg2=2.9.9
-  - sortedcontainers=2.4.0
-  - pyyaml=6.0.2
-  - pandas
+  - basemap=1.4.1
+  - graph-tool=2.92
   - jupyter
-  - scikit-learn
-  - statsmodels
-  - pyinstaller
+  - maxminddb=2.6.2
+  - pandas=2.2.3
   - pip
+  - psycopg2
+  - pyinstaller=5.13.2
+  - pyproj=3.6.0
+  - python=3.11
+  - pyyaml
+  - scikit-learn
+  - sortedcontainers
+  - statsmodels
   - pip:
       - ipwhois

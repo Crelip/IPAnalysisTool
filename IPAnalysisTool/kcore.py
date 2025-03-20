@@ -1,4 +1,4 @@
-import graph_tool.all as gt
+from graph_tool import Graph
 import datetime
 from collections import defaultdict
 
@@ -14,11 +14,12 @@ def kCoreDecompositionFromDate(date: datetime.date, weighted=False, **kwargs):
     except KeyError:
         return None
 
-def kCoreDecomposition(g: gt.Graph, **kwargs):
+def kCoreDecomposition(g: Graph, **kwargs):
+    from graph_tool.all import kcore_decomposition
     output = kwargs.get("output") or "json"
     # Do k-core decomposition on an undirected version of the graph
     g = removeReciprocalEdges(g)
-    kCore = gt.kcore_decomposition(g)
+    kCore = kcore_decomposition(g)
     groups = defaultdict(list)
     metadata = loads(g.gp.metadata)
     maxK = 0
@@ -43,23 +44,22 @@ def kCoreDecomposition(g: gt.Graph, **kwargs):
     return result
 
 def visualizeKCoreDecomposition(date: datetime.date):
-    from .visualize import baseVisualize
-    g, kCore, date = kCoreDecompositionFromDate(date, output="graph")
+    from graph_tool import GraphView
+    from .visualize import visualize_graph, visualize_graph_world
+    g, kCore, date, k = kCoreDecompositionFromDate(date, output="graph")
     maxK = max([kCore[v] for v in g.vertices()])
     vfilt = g.new_vertex_property("bool")
     for v in g.vertices(): vfilt[v] = kCore[v] == maxK
-    gv = gt.GraphView(g, vfilt=vfilt)
-    baseVisualize(gv, f"kcore_{getDateString(date)}")
+    gv = GraphView(g, vfilt=vfilt)
+    visualize_graph(gv, f"kcore_{getDateString(date)}")
 
-
-
-def main():
+def main(args=None):
     from argparse import ArgumentParser
     from json import dumps
     parser = ArgumentParser()
     parser.add_argument("-d", "--date", help="Generates data for the week containing the given date.")
     parser.add_argument("-s", "--visualize", action="store_true", help="Visualize the k-core decomposition.")
-    args = parser.parse_args()
+    args = parser.parse_args(args)
     if args.visualize:
         visualizeKCoreDecomposition(getDateObject(args.date))
     else:
