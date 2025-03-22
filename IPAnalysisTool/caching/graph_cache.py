@@ -161,14 +161,14 @@ def generate_interval_data(start, end, rem_cur, data_folder : str, verbose : boo
                     traversals_num[edge] += 1
 
                 # Add distance to node
-                node_distances[dest_node].append(times[i])
+                node_distances[dest_node].append(times[i] / 2)
 
                 # Add route index to edge and vertex
                 g.ep.routes[edge].append(route_index)
                 g.vp.routes[dest_node].append(route_index)
 
                 if weighted_edges:
-                    edgeWeight = times[i] - (times[i - 1] if i > 0 else 0)
+                    edgeWeight = (times[i] - (times[i - 1] if i > 0 else 0)) / 2
                     edge_weights[edge].append(edgeWeight)
                     if edgeWeight > float(max_edge_weight[edge]): max_edge_weight[edge] = edgeWeight
                     if edgeWeight < float(min_edge_weight[edge]): min_edge_weight[edge] = edgeWeight
