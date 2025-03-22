@@ -72,7 +72,7 @@ def accessibilityWithinHops(date: datetime.date, doStructuredOutput: bool = Fals
     # If the data is not found in the cache, generate the data, then try again
     except FileNotFoundError:
         print("Data not found in cache. Generating data...")
-        from caching.graphCache import generateWeeklyData
+        from caching.graph_cache import generateWeeklyData
         generateWeeklyData(date, get_week(date)[1])
         try:
            internalAccessibilityWithinHops(date, doStructuredOutput)

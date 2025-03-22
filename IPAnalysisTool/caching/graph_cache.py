@@ -4,11 +4,6 @@
 # -i [YYYY-MM-DD] [YYYY-MM-DD]: Generates a graph only for the list of weeks which begin with the week containing the first given date and ends with the week containing the second given date.
 # -t [YYYY-MM-DD]: Generates a graph only for the aforementioned weeks which include the given date.
 
-## These arguments are not implemented yet
-# -o [folder]: Outputs the data to the given folder. By default the program outputs data to $HOME/.cache/IPAnalysisTool/graphs/
-# -e: If this flag is given, the program does not overwrite existing data.
-# -c [filename]: Uses a custom config file. Default config file: $HOME/.config/IPAnalysisTool/config.conf 
-
 from datetime import datetime, timedelta
 import os
 from graph_tool import Graph
@@ -80,14 +75,14 @@ def generate_interval_data(start, end, rem_cur, data_folder : str, verbose : boo
     avg_node_distance = g.new_vertex_property("float")
     node_properties = g.new_vertex_property("string")
 
-    g.edge_properties['traversals'] = traversals_num
-    g.vertex_properties['ip'] = ip_address
-    g.vertex_properties['positionInRoute'] = position_in_route
-    g.vertex_properties['nodeDistances'] = node_distances
-    g.vertex_properties['minDistance'] = min_node_distance
-    g.vertex_properties['maxDistance'] = max_node_distance
-    g.vertex_properties['avgDistance'] = avg_node_distance
-    g.vertex_properties['properties'] = node_properties
+    g.ep['traversals'] = traversals_num
+    g.vp['ip'] = ip_address
+    g.vp['position_in_route'] = position_in_route
+    g.vp['distances'] = node_distances
+    g.vp['min_distance'] = min_node_distance
+    g.vp['max_distance'] = max_node_distance
+    g.vp['avg_distance'] = avg_node_distance
+    g.vp['properties'] = node_properties
 
     g.vp["routes"] = g.new_vertex_property("vector<int>")
     g.ep["routes"] = g.new_edge_property("vector<int>")
@@ -102,9 +97,9 @@ def generate_interval_data(start, end, rem_cur, data_folder : str, verbose : boo
         avg_edge_weight = g.new_edge_property("float")
         max_edge_weight = g.new_edge_property("float")
         g.edge_properties['weights'] = edge_weights
-        g.edge_properties['avgWeight'] = avg_edge_weight
-        g.edge_properties['maxWeight'] = max_edge_weight
-        g.edge_properties['minWeight'] = min_edge_weight
+        g.edge_properties['avg_weight'] = avg_edge_weight
+        g.edge_properties['max_weight'] = max_edge_weight
+        g.edge_properties['min_weight'] = min_edge_weight
 
     # Adding starting IP address
     starting_address = "127.0.0.1"
@@ -189,9 +184,11 @@ def generate_interval_data(start, end, rem_cur, data_folder : str, verbose : boo
 
     metadata = g.new_graph_property("string")
     g.gp["metadata"] = metadata
-    g.gp["metadata"] = dumps({"date": start,
-                              "routeDates": [get_date_string(date) for date in route_dates],
-                              "weightedEdges": weighted_edges})
+    g.gp["metadata"] = dumps({
+        "date": start,
+        "route_dates": [get_date_string(date) for date in route_dates],
+        "weighted_edges": weighted_edges
+         })
     data_folder = data_folder + f"/{'base' if not weighted_edges else 'weighted'}"
     if not os.path.exists(data_folder): os.makedirs(data_folder)
     g.save(f"{data_folder}/{start}.gt")
@@ -254,7 +251,7 @@ def main(args = None):
     parser.add_argument("-t", "--time",
                         help="Generates a graph only for the aforementioned time interval which includes the given date.")
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
-    parser.add_argument("-w", "--weightedEdges", action="store_true", help="Use edge weights")
+    parser.add_argument("-w", "--weighted_edges", action="store_true", help="Use edge weights")
     parser.add_argument("-m", "--metadata", action="store_true", help="Collect information about each IP address from WHOIS. May take a very long time.")
 
     args = parser.parse_args(args)
@@ -267,6 +264,6 @@ def main(args = None):
     else:
         start, end = get_database_range()
 
-    generateWeeklyData(start, end, args.verbose, args.weightedEdges, args.metadata)
+    generateWeeklyData(start, end, args.verbose, args.weighted_edges, args.metadata)
 
 if __name__ == "__main__": main()

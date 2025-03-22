@@ -18,7 +18,7 @@ class WhoIsDatabase:
         self.conn.commit()
 
     def insert_or_update(self, ip, data):
-        timestamp = datetime.utcnow().isoformat()
+        timestamp = datetime.now().isoformat()
         self.cursor.execute('''
             INSERT INTO whois_data (ip, data, timestamp)
             VALUES (?, ?, ?)

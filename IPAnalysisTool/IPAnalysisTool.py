@@ -1,20 +1,38 @@
-import sys
 def main():
-    if sys.argv[1] == "graphCache":
-        from IPAnalysisTool.caching.graphCache import main as graphCache
-        graphCache(sys.argv[2:])
-    elif sys.argv[1] == "timeSeriesAnalysis":
-        from timeSeriesAnalysis import main as timeSeriesAnalysis
-        timeSeriesAnalysis(sys.argv[2:])
-    elif sys.argv[1] == "hBackbone":
-        from IPAnalysisTool.hBackbone import main as hBackbone
-        hBackbone(sys.argv[2:])
-    elif sys.argv[1] == "kcore":
-        from IPAnalysisTool.k_core import main as kCore
-        kCore(sys.argv[2:])
-    else:
-        print("""Welcome to IPAnalysisTool!
-        In order to use its features, you must provide other arguments.""")
+    import sys
+    from importlib import import_module
+    commands = {
+        "graph_cache": {
+            "launch": ("IPAnalysisTool.caching.graph_cache", "main"),
+            "description": "Cache the graph data"
+        },
+        "timeSeriesAnalysis": {
+            "launch": ("timeSeriesAnalysis", "main"),
+            "description": "Gather data into a CSV file"
+        },
+        "hBackbone": {
+            "launch": ("IPAnalysisTool.hBackbone", "main"),
+            "description": "Find the hBackbone of a network"
+        },
+        "k_core": {
+            "launch": ("IPAnalysisTool.k_core", "main"),
+            "description": "Find the k-core of a network"
+        }
+    }
+
+    if len(sys.argv) < 2 or sys.argv[1] not in commands:
+        print("Welcome to IPAnalysisTool!\nAvailable commands:\n" +
+              '\n'.join([f'{command}: {commands[command]["description"]}' for command in commands.keys()]) +
+              f'\nUsage: {sys.argv[0]} <command> <args>' +
+              '\nIf you need help with any command, use the -h or --help flag after the command name.')
         sys.exit(1)
+
+    command = sys.argv[1]
+    module_path, function_name = commands[command]["launch"]
+
+    # Import the module dynamically and call the specified function
+    module = import_module(module_path)
+    function = getattr(module, function_name)
+    function(sys.argv[2:])
 if __name__ == "__main__":
     main()
