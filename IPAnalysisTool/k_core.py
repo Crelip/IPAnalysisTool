@@ -1,11 +1,17 @@
-from graph_tool import Graph
-import datetime
+from typing import TypedDict
+from graph_tool import Graph, VertexPropertyMap
+
 from collections import defaultdict
 
 from IPAnalysisTool.util.graph_getter import get_graph_by_date
 from .util.week_util import get_date_string
 
-def k_core_decomposition(g: Graph) -> dict:
+class KCoreDecompositionResult(TypedDict):
+    graph: Graph
+    k_core_decomposition: VertexPropertyMap
+    max_k: int
+
+def k_core_decomposition(g: Graph) -> KCoreDecompositionResult:
     from .util.graph_manipulation import remove_reciprocal_edges
     from graph_tool.all import kcore_decomposition
     # Do k-core decomposition on an undirected version of the graph
@@ -55,10 +61,13 @@ def main(args=None):
     from json import dumps
     parser = ArgumentParser()
     parser.add_argument("-d", "--date", help="Generates data for the week containing the given date.")
+
+    # Output specifiers
     parser.add_argument("-s", "--visualize", action="store_true", help="Visualize the k-core decomposition.")
     parser.add_argument("-m", "--map_visualize", action="store_true", help="Visualize the k-core decomposition on the world map.")
-    parser.add_argument("-o", "--output", nargs=1, help="Output the k-core decomposition.")
-    parser.add_argument("-p", "--print", action="store_true", help="Print the k-core decomposition on stdout.")
+    parser.add_argument("-o", "--output", type=str, metavar="FILE", help="Output the k-core decomposition results (excluding the graph) to a file.")
+    parser.add_argument("-p", "--print", action="store_true", help="Print the k-core decomposition result (excluding the graph) on stdout.")
+    parser.add_argument("-g", "--graph", type=str, metavar="FILE", help="Output the resulting graph in the form of a .gt file.")
     args = parser.parse_args(args)
     data = k_core_decomposition(get_graph_by_date(args.date))
     if args.visualize:
@@ -70,7 +79,10 @@ def main(args=None):
     if args.output:
         with open(args.output[0], "w") as f:
             f.write(dumps(data, indent=2))
-    if args.verbose:
+    if args.graph:
+        filtered_graph = get_k_core(data["graph"], data["max_k"])
+        filtered_graph.save(f"{args.graph}.gt")
+    if args.print:
         print(data)
 
 
