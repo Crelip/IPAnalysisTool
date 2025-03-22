@@ -1,32 +1,37 @@
-from os.path import expanduser
-
-
-def connectToRemoteDB():
+def connect_to_remote_db() -> tuple:
+    """
+    Connect to the remote database using the login details stored in ~/.config/IPAnalysisTool/config.yml
+    :return: tuple of the psycopg2 connection and cursor objects
+    """
     import psycopg2
     import os
     import yaml
-    configFolder = os.path.expanduser("~/.config/IPAnalysisTool")
-    if not os.path.exists(configFolder):
-        os.makedirs(configFolder)
+    config_folder = os.path.expanduser("~/.config/IPAnalysisTool")
+    if not os.path.exists(config_folder):
+        os.makedirs(config_folder)
     config = None
     try:
-        with open(configFolder + "/config.yml", "r") as f:
+        with open(config_folder + "/config.yml", "r") as f:
             config = yaml.safe_load(f)
     except:
-        from .setupUtil import setupDatabaseLogin
-        setupDatabaseLogin()
+        from .setup_util import setup_database_login
+        setup_database_login()
 
     try:
-        remConn = psycopg2.connect(
+        rem_conn = psycopg2.connect(
             "dbname=" + config["database_name"] + " user=" + config["database_user"] + " password=" + config[
                 "database_password"] + " host=" + config["database_host"])
     except:
         print("Error connecting to the database. Please check your login details.")
         exit(1)
-    remCur = remConn.cursor()
-    return remConn, remCur
+    rem_cur = rem_conn.cursor()
+    return rem_conn, rem_cur
 
-def connectToLocalDB():
+def connect_to_local_db() -> tuple:
+    """
+    Connect to the local SQLite database
+    :return: tuple of the sqlite3 connection and cursor objects
+    """
     import sqlite3
     import datetime
     from os.path import expanduser
@@ -43,6 +48,6 @@ def connectToLocalDB():
     sqlite3.register_adapter(datetime.date, adapt_date)
     sqlite3.register_converter("DATE", convert_date)
 
-    locConn = sqlite3.connect(expanduser("~/.cache/IPAnalysisTool/data.db"))
-    locCur = locConn.cursor()
-    return locConn, locCur
+    loc_conn = sqlite3.connect(expanduser("~/.cache/IPAnalysisTool/data.db"))
+    loc_cur = loc_conn.cursor()
+    return loc_conn, loc_cur

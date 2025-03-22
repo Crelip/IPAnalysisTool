@@ -1,8 +1,8 @@
-from ..util.databaseUtil import connectToRemoteDB
+from ..util.database_util import connect_to_remote_db
 import pandas as pd
 
 def pingAvg(addresses = None):
-    remConn, remCur = connectToRemoteDB()
+    remConn, remCur = connect_to_remote_db()
     remCur.execute("""WITH non_reserved_ip AS
                        (SELECT h.ip_addr AS ip_addr FROM hosts h WHERE
                        NOT (h.ip_addr <<= '0.0.0.0/8' 

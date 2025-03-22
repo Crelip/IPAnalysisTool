@@ -15,7 +15,7 @@ from graph_tool import Graph
 from typing import Tuple
 from ..util.weekUtil import getWeek, getWeekDates, getDateString
 from ..util.whoisUtil import WhoIs
-from ..util.databaseUtil import connectToRemoteDB
+from ..util.database_util import connect_to_remote_db
 from json import dumps
 from sortedcontainers import SortedSet
 
@@ -29,7 +29,7 @@ def is_nondecreasing_array(arr):
 # Gets the earliest and latest date in the database
 def get_database_range() -> Tuple[datetime.date, datetime.date]:
     # Database connection setup
-    rem_conn, rem_cur = connectToRemoteDB()
+    rem_conn, rem_cur = connect_to_remote_db()
 
     # Get the earliest date
     rem_cur.execute("SELECT MIN(t_date) FROM topology")
@@ -203,7 +203,7 @@ def generate_interval_data(start, end, rem_cur, data_folder : str, verbose : boo
 # For each week, generate a graph using generateOutput()
 def generateWeeklyData(start: datetime.date, end: datetime.date, verbose: bool, weightedEdges : bool = False, collectMetadata : bool = False):
     # Database connection setup
-    rem_conn, rem_cur = connectToRemoteDB()
+    rem_conn, rem_cur = connect_to_remote_db()
 
     data_folder : str = os.path.expanduser("~/.cache/IPAnalysisTool/graphs/week")
     if not os.path.exists(data_folder):

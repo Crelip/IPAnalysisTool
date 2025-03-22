@@ -1,8 +1,8 @@
-from ..util.databaseUtil import connectToLocalDB, connectToRemoteDB
+from ..util.database_util import connect_to_local_db, connect_to_remote_db
 
 def pingTopologyCorrelationCache(address):
-    remConn, remCur = connectToRemoteDB()
-    locConn, locCur = connectToLocalDB()
+    remConn, remCur = connect_to_remote_db()
+    locConn, locCur = connect_to_local_db()
     # Get ping and topology measurements from days during which there was both a successful ping and topology measurement.
     remCur.execute(f"""SELECT p.ip_addr, date(t.t_date) AS date, p.ping_rttmin, p.ping_rttavg, p.ping_rttmax, t.t_hops FROM ping p JOIN topology t ON p.ip_addr = t.ip_addr AND date(t.t_date) = date(p.ping_date)
     WHERE p.ip_addr = cidr '{address}/32' AND date(t.t_date) >= date '2009-01-01' AND p.ping_ploss < 100 AND p.ping_ploss >= 0 AND t.t_status <> 'E' ORDER BY date ASC;""")

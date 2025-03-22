@@ -2,11 +2,11 @@ import sqlite3
 from datetime import datetime
 import json
 from os.path import expanduser
-from ..util.databaseUtil import connectToLocalDB
+from ..util.database_util import connect_to_local_db
 
 class WhoIsDatabase:
     def __init__(self):
-        self.conn, self.cursor = connectToLocalDB()
+        self.conn, self.cursor = connect_to_local_db()
         self._create_table()
 
     def _create_table(self):
