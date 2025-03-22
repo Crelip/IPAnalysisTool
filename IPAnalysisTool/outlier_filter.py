@@ -2,10 +2,11 @@
 import pandas as pd
 import numpy as np
 
-def zScoreFilter(data, key=None, threshold=3):
+def z_score_filter(data, key=None, threshold=3):
     """
     Filters out outliers from the data using the z-score method.
     :param data: Data to filter
+    :param key: Column to filter on
     :param threshold: Threshold for filtering outliers
     :return: Filtered data
     """
@@ -13,10 +14,11 @@ def zScoreFilter(data, key=None, threshold=3):
     data["zscore"] = zscore(data[key])
     return data[np.abs(data["zscore"]) < threshold]
 
-def IQRFilter(data, key=None, threshold=1.5):
+def iqr_filter(data, key=None, threshold=1.5):
     """
     Filters out outliers from the data using the IQR method.
     :param data: Data to filter
+    :param key: Column to filter on
     :param threshold: Threshold for filtering outliers, should not be set to other than 1.5
     :return: Filtered data
     """
@@ -25,10 +27,11 @@ def IQRFilter(data, key=None, threshold=1.5):
     iqr = q3 - q1
     return data[(data[key] >= q1 - threshold * iqr) & (data[key] <= q3 + threshold * iqr)]
 
-def MADFilter(data, key=None, threshold=3.5):
+def mad_filter(data, key=None, threshold=3.5):
     """
     Filters out outliers from the data using the MAD (Median Absolute Deviation) method.
     :param data: Data to filter
+    :param key: Column to filter on
     :param threshold: Threshold for filtering outliers
     :return: Filtered data
     """
@@ -36,13 +39,13 @@ def MADFilter(data, key=None, threshold=3.5):
     mad = np.abs(data[key] - median).median()
     return data[np.abs(data[key] - median) / mad < threshold]
 
-def residFilter(data, key=None, threshold=2):
+def resid_filter(data, key=None, threshold=2):
     """
     Filters out outliers from the data using the residuals method.
-    :param data:
-    :param key:
-    :param threshold:
-    :return:
+    :param data: Data to filter
+    :param key: Column to filter on
+    :param threshold: Threshold for filtering outliers
+    :return: Filtered data
     """
     import statsmodels.api as sm
     data["weekNum"] = data["date"].map(pd.Timestamp.toordinal)
@@ -52,13 +55,13 @@ def residFilter(data, key=None, threshold=2):
     threshold *= residuals.std()
     return data[np.abs(residuals) < threshold]
 
-def isolationForestFilter(data, key=None, threshold=0.05):
+def isolation_forest_filter(data, key=None, threshold=0.05):
     """
     Filters out outliers from the data using the Isolation Forest method.
-    :param data:
-    :param key:
-    :param threshold:
-    :return:
+    :param data: Data to filter
+    :param key: Column to filter on
+    :param threshold: Threshold for filtering outliers
+    :return: Filtered data
     """
     from sklearn.ensemble import IsolationForest
     model = IsolationForest(contamination=threshold)
@@ -77,7 +80,15 @@ def main():
     data = pd.read_csv(args.filename)
     filtered = pd.DataFrame()
     if args.method == "zscore":
-        filtered = zScoreFilter(data, args.key, args.threshold)
+        filtered = z_score_filter(data, args.key, args.threshold)
+    elif args.method == "iqr":
+        filtered = iqr_filter(data, args.key, args.threshold)
+    elif args.method == "mad":
+        filtered = mad_filter(data, args.key, args.threshold)
+    elif args.method == "resid":
+        filtered = resid_filter(data, args.key, args.threshold)
+    elif args.method == "isolation":
+        filtered = isolation_forest_filter(data, args.key, args.threshold)
     filtered.to_csv(args.output, index=False)
 
 if __name__ == "__main__":
