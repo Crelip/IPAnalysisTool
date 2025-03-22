@@ -18,7 +18,7 @@ def visualize_graph_world(g: Graph, name: str, geo_data = None):
     from mpl_toolkits.basemap import Basemap
     import matplotlib.pyplot as plt
     if geo_data is None:
-        from IPAnalysisTool.util.geoDataUtil import get_geo_data
+        from IPAnalysisTool.util.geo_data_util import get_geo_data
         geo_data = get_geo_data(g.vp.ip[v] for v in g.vertices())
 
     fig, ax = plt.subplots(1, 1, figsize=(8, 8))

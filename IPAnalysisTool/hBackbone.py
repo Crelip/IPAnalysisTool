@@ -1,5 +1,5 @@
 from graph_tool import Graph
-from .util.calculations import getHIndex
+from .util.calculations import get_h_index
 from .visualize import visualize_graph
 
 # Get bridge of the network
@@ -33,8 +33,8 @@ def h_backbone(g: Graph,
     bridge = g.ep.bridge
     # H-Bridge calculation
     h_strength_property = g.ep.traversals
-    h_bridge: int = getHIndex(g, bridge)
-    h_strength: int = getHIndex(g, h_strength_property)
+    h_bridge: int = get_h_index(g, bridge)
+    h_strength: int = get_h_index(g, h_strength_property)
     h_edges = set()
     efilt = g.new_ep("bool", vals=[False] * g.num_edges())
     if verbose:
@@ -63,7 +63,7 @@ def h_backbone(g: Graph,
 def main(args = None):
     from argparse import ArgumentParser
     from .util.graph_getter import get_graph_by_date
-    from .util.weekUtil import getDateObject
+    from .util.week_util import get_date_object
     from json import dumps
 
     parser = ArgumentParser()
@@ -76,7 +76,7 @@ def main(args = None):
     args = parser.parse_args(args)
 
     modifier = args.modifier or 1
-    h_backbone(get_graph_by_date(getDateObject(args.date), args.weightedEdges), modifier=modifier, visualize=args.visualize, verbose=args.verbose)
+    h_backbone(get_graph_by_date(get_date_object(args.date), args.weightedEdges), modifier=modifier, visualize=args.visualize, verbose=args.verbose)
     # print(dumps(hBackbone(datetime.datetime.strptime(args.date, "%Y-%m-%d").date(), modifier=args.modifier, visualize=args.visualize), indent=2))
 
 

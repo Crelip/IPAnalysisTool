@@ -1,7 +1,7 @@
 from graph_tool import Graph
 import os
 import datetime
-from .weekUtil import getWeek
+from .week_util import get_week
 
 def get_graph_by_date(date, weightedEdges = False) -> Graph:
     """
@@ -12,12 +12,12 @@ def get_graph_by_date(date, weightedEdges = False) -> Graph:
     """
     if type(date) != datetime.date:
         try:
-            from .weekUtil import getDateObject
-            date = getDateObject(date)
+            from .week_util import get_date_object
+            date = get_date_object(date)
         except:
             print("Invalid date format.")
     from graph_tool import load_graph
-    inputFile : str = os.path.expanduser(f'''~/.cache/IPAnalysisTool/graphs/week/{'base' if not weightedEdges else 'weighted'}/{datetime.datetime.strftime(getWeek(date)[0], "%Y-%m-%d")}.gt''')
+    inputFile : str = os.path.expanduser(f'''~/.cache/IPAnalysisTool/graphs/week/{'base' if not weightedEdges else 'weighted'}/{datetime.datetime.strftime(get_week(date)[0], "%Y-%m-%d")}.gt''')
     return load_graph(inputFile)
 
 def get_all_graph_dates(weightedEdges = False):

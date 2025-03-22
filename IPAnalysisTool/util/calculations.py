@@ -1,7 +1,7 @@
 from collections.abc import Iterable
 from math import floor
 
-def getHIndex(g, values) -> int:
+def get_h_index(g, values) -> int:
     n = g.num_edges()
     freq = [0] * (n + 1)
     for item in g.edges():

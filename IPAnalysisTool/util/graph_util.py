@@ -1,7 +1,7 @@
 from graph_tool import Graph, VertexPropertyMap
 
 
-def mapVerticesByProperty(g1: Graph, g2: Graph, property: str = "ip") -> dict:
+def map_vertices_by_property(g1: Graph, g2: Graph, property: str = "ip") -> dict:
     g1_prop = g1.vertex_properties[property]
     g2_prop = g2.vertex_properties[property]
     ip_to_vertex = {}

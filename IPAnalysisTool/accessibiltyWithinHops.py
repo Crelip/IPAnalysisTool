@@ -2,7 +2,7 @@
 import graph_tool.all as gt
 import datetime
 import os
-from util.weekUtil import getWeek
+from util.week_util import get_week
 import json
 from collections import defaultdict
 
@@ -65,7 +65,7 @@ def internalAccessibilityWithinHops(date, doStructuredOutput: bool = False, outp
 
 # Interface for other scripts
 def accessibilityWithinHops(date: datetime.date, doStructuredOutput: bool = False):
-    date = getWeek(date)[0]
+    date = get_week(date)[0]
     dateStripped = date.strftime('%Y-%m-%d')
     try:
         internalAccessibilityWithinHops(date, doStructuredOutput)
@@ -73,7 +73,7 @@ def accessibilityWithinHops(date: datetime.date, doStructuredOutput: bool = Fals
     except FileNotFoundError:
         print("Data not found in cache. Generating data...")
         from caching.graphCache import generateWeeklyData
-        generateWeeklyData(date, getWeek(date)[1])
+        generateWeeklyData(date, get_week(date)[1])
         try:
            internalAccessibilityWithinHops(date, doStructuredOutput)
         except:

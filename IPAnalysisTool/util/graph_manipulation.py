@@ -1,6 +1,6 @@
 from graph_tool import Graph
 
-def removeReciprocalEdges(g: Graph):
+def remove_reciprocal_edges(g: Graph):
     g_new = g.copy()
     # Remove all edges
     edge_removal = g_new.new_edge_property("bool")
@@ -21,17 +21,17 @@ def removeReciprocalEdges(g: Graph):
     return g_new
 
 
-def continousSubgraph(disconnected_graph : Graph, base_graph : Graph, weight = None):
+def continous_subgraph(disconnected_graph : Graph, base_graph : Graph, weight = None):
     from itertools import combinations
     from graph_tool.all import Graph, shortest_distance, min_spanning_tree
-    from IPAnalysisTool.util.graphUtil import mapVerticesByProperty
+    from IPAnalysisTool.util.graph_util import map_vertices_by_property
     '''
     Returns a continuous subgraph from a disconnected graph
     :param disconnected_graph: a subgraph of base_graph
     :param base_graph: the base graph, should be connected (at least in undirected context)
     :return:
     '''
-    ipMap = mapVerticesByProperty(disconnected_graph, base_graph)
+    ipMap = map_vertices_by_property(disconnected_graph, base_graph)
     terminals = [ipMap[v] for v in disconnected_graph.vertices()]
 
     if weight is None:
@@ -133,14 +133,14 @@ def continousSubgraph(disconnected_graph : Graph, base_graph : Graph, weight = N
             final_weight[new_e] = steiner_weight[e]
 
     # Add all edges from disconnected_graph
-    disconnected_final_map = mapVerticesByProperty(disconnected_graph, final_subgraph)
+    disconnected_final_map = map_vertices_by_property(disconnected_graph, final_subgraph)
     for e in disconnected_graph.edges():
         final_subgraph.add_edge(disconnected_final_map[e.source()], disconnected_final_map[e.target()])
 
-    return removeReciprocalEdges(final_subgraph)
+    return remove_reciprocal_edges(final_subgraph)
 
 def mergeSubgraphs(disconnected_graph_1 : Graph, disconnected_graph_2 : Graph, base_graph : Graph) -> Graph:
-    from .graphUtil import get_address_node_map
+    from .graph_util import get_address_node_map
     disconnected_graph = Graph(directed = False)
     disconnected_graph.vp["ip"] = disconnected_graph.new_vertex_property("string")
     addresses = set()
@@ -160,4 +160,4 @@ def mergeSubgraphs(disconnected_graph_1 : Graph, disconnected_graph_2 : Graph, b
             vertex_map[disconnected_graph_2.vp.ip[e.source()]],
             vertex_map[disconnected_graph_2.vp.ip[e.target()]]
         )
-    return continousSubgraph(disconnected_graph, base_graph)
+    return continous_subgraph(disconnected_graph, base_graph)

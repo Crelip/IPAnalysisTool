@@ -3,13 +3,13 @@ import datetime
 from collections import defaultdict
 
 from IPAnalysisTool.util.graph_getter import get_graph_by_date
-from .util.weekUtil import getDateString
+from .util.week_util import get_date_string
 
 def k_core_decomposition(g: Graph) -> dict:
-    from .util.graphManipulation import removeReciprocalEdges
+    from .util.graph_manipulation import remove_reciprocal_edges
     from graph_tool.all import kcore_decomposition
     # Do k-core decomposition on an undirected version of the graph
-    g = removeReciprocalEdges(g)
+    g = remove_reciprocal_edges(g)
     k_core_prop = kcore_decomposition(g)
     groups = defaultdict(list)
     max_k = 0
@@ -63,10 +63,10 @@ def main(args=None):
     data = k_core_decomposition(get_graph_by_date(args.date))
     if args.visualize:
         from .visualize import visualize_graph
-        visualize_graph(data["graph"], f"k-core-{getDateString(data['date'])}")
+        visualize_graph(data["graph"], f"k-core-{get_date_string(data['date'])}")
     if args.map_visualize:
         from .visualize import visualize_graph_world
-        visualize_graph_world(data["graph"], f"k-core-{getDateString(data['date'])}")
+        visualize_graph_world(data["graph"], f"k-core-{get_date_string(data['date'])}")
     if args.output:
         with open(args.output[0], "w") as f:
             f.write(dumps(data, indent=2))

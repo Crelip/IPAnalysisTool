@@ -10,7 +10,7 @@
     # - maximum k-core size
 from anyio import current_effective_deadline
 
-from util.weekUtil import getWeekDates, getDateString, getDateObject, getCacheDateRange
+from util.week_util import get_week_dates, get_date_string, get_date_object, get_cache_date_range
 from k_core import k_core_decomposition_from_date
 import graph_tool.all as gt
 import numpy as np
@@ -57,7 +57,7 @@ def processDate(i, date, verbose = False, weekLong = False, weighted = False):
             localKcoreSizes[k] += 1
 
         if verbose:
-            print("Week " + getDateString(date) + " done")
+            print("Week " + get_date_string(date) + " done")
             print(diameter)
 
         return i, diameter, diameterVertices, vertices, edges, radius, localKcoreSizes
@@ -66,10 +66,10 @@ def processDate(i, date, verbose = False, weekLong = False, weighted = False):
 
 
 def timeSeriesAnalysis(verbose=False, dateRange=None, maxThreads=1, weekLong=False, weighted=False):
-    graphDateRange = getCacheDateRange()
-    dates = [date[0] for date in getWeekDates(graphDateRange[0], graphDateRange[1])]
+    graphDateRange = get_cache_date_range()
+    dates = [date[0] for date in get_week_dates(graphDateRange[0], graphDateRange[1])]
     if dateRange:
-        dateRange = [getDateObject(date) for date in dateRange]
+        dateRange = [get_date_object(date) for date in dateRange]
         earliestDate = max(min(dates), dateRange[0])
         latestDate = min(max(dates), dateRange[1])
     else:
@@ -78,7 +78,7 @@ def timeSeriesAnalysis(verbose=False, dateRange=None, maxThreads=1, weekLong=Fal
     if earliestDate > latestDate:
         return None
 
-    allDates = [date[0] for date in getWeekDates(earliestDate, latestDate)]
+    allDates = [date[0] for date in get_week_dates(earliestDate, latestDate)]
     allDatesCount = len(allDates)
     print(f"Processing {allDatesCount} dates")
 
@@ -112,7 +112,7 @@ def timeSeriesAnalysis(verbose=False, dateRange=None, maxThreads=1, weekLong=Fal
             except Exception as e:
                 print(f"Error processing date: {e}")
 
-    dateStrings = [getDateString(date) for date in allDates]
+    dateStrings = [get_date_string(date) for date in allDates]
     data = {
         "date": dateStrings,
         "networkDiameter (ms)": networkDiametersInMs,

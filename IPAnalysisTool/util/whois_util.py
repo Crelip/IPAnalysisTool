@@ -1,7 +1,5 @@
-import sqlite3
 from datetime import datetime
 import json
-from os.path import expanduser
 from ..util.database_util import connect_to_local_db
 
 class WhoIsDatabase:

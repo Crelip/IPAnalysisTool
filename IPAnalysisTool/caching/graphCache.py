@@ -13,8 +13,8 @@ from datetime import datetime, timedelta
 import os
 from graph_tool import Graph
 from typing import Tuple
-from ..util.weekUtil import getWeek, getWeekDates, getDateString
-from ..util.whoisUtil import WhoIs
+from ..util.week_util import get_week, get_week_dates, get_date_string
+from ..util.whois_util import WhoIs
 from ..util.database_util import connect_to_remote_db
 from json import dumps
 from sortedcontainers import SortedSet
@@ -190,7 +190,7 @@ def generate_interval_data(start, end, rem_cur, data_folder : str, verbose : boo
     metadata = g.new_graph_property("string")
     g.gp["metadata"] = metadata
     g.gp["metadata"] = dumps({"date": start,
-                              "routeDates": [getDateString(date) for date in route_dates],
+                              "routeDates": [get_date_string(date) for date in route_dates],
                               "weightedEdges": weighted_edges})
     data_folder = data_folder + f"/{'base' if not weighted_edges else 'weighted'}"
     if not os.path.exists(data_folder): os.makedirs(data_folder)
@@ -239,7 +239,7 @@ def generateWeeklyData(start: datetime.date, end: datetime.date, verbose: bool, 
                     )"""
                    )
     if verbose: print("Created non_reserved_ip table.")
-    weeks = getWeekDates(start, end)
+    weeks = get_week_dates(start, end)
     for week in weeks:
         generate_interval_data(week[0], week[0] + timedelta(days=7), rem_cur, data_folder, verbose, weightedEdges)
 
@@ -260,10 +260,10 @@ def main(args = None):
     args = parser.parse_args(args)
 
     if args.interval:
-        start = getWeek(datetime.strptime(args.interval[0], "%Y-%m-%d"))[0]
-        end = getWeek(datetime.strptime(args.interval[1], "%Y-%m-%d"))[1]
+        start = get_week(datetime.strptime(args.interval[0], "%Y-%m-%d"))[0]
+        end = get_week(datetime.strptime(args.interval[1], "%Y-%m-%d"))[1]
     elif args.time:
-        start, end = getWeek(datetime.strptime(args.time, "%Y-%m-%d"))
+        start, end = get_week(datetime.strptime(args.time, "%Y-%m-%d"))
     else:
         start, end = get_database_range()
 

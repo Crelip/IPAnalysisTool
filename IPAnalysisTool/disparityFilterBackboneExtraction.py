@@ -1,7 +1,7 @@
 # Based on https://github.com/DerwenAI/disparity_filter
 from graph_tool import Graph, GraphView
 from scipy.stats import percentileofscore
-from .util.graphManipulation import removeReciprocalEdges
+from .util.graph_manipulation import remove_reciprocal_edges
 
 def disparityIntegral(x, k):
     assert x != 1.0, "x cannot be 1.0"
@@ -68,7 +68,7 @@ def disparityFilter(g : Graph, percentileThreshold = 50.0):
     print(gv.num_edges())
 
     # Get rid of duplicite edges
-    gv = removeReciprocalEdges(gv)
+    gv = remove_reciprocal_edges(gv)
 
     # Remove vertices with degree less than 2 - iterate until no vertices are removed
     prune = True
@@ -88,13 +88,13 @@ def main():
     from argparse import ArgumentParser
     from IPAnalysisTool.util.graph_getter import get_graph_by_date
     from IPAnalysisTool.visualize import visualize_graph
-    from IPAnalysisTool.util.weekUtil import getDateObject
+    from IPAnalysisTool.util.week_util import get_date_object
     parser = ArgumentParser()
     parser.add_argument("-d", "--date", help="Date to process", type=str)
     parser.add_argument("-p", "--percentile", help="Percentile threshold", type=float, default=50.0)
     parser.add_argument("-w", "--weighted", help="Weighted edges", action="store_true")
     args = parser.parse_args()
-    g = disparityFilter(get_graph_by_date(getDateObject(args.date)), args.percentile)
+    g = disparityFilter(get_graph_by_date(get_date_object(args.date)), args.percentile)
     print(g.num_vertices())
     visualize_graph(g, f"disparity_{args.date}")
 
