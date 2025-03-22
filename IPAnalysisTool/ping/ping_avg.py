@@ -1,9 +1,9 @@
 from ..util.database_util import connect_to_remote_db
 import pandas as pd
 
-def pingAvg(addresses = None):
-    remConn, remCur = connect_to_remote_db()
-    remCur.execute("""WITH non_reserved_ip AS
+def ping_avg(addresses = None):
+    rem_conn, rem_cur = connect_to_remote_db()
+    rem_cur.execute("""WITH non_reserved_ip AS
                        (SELECT h.ip_addr AS ip_addr FROM hosts h WHERE
                        NOT (h.ip_addr <<= '0.0.0.0/8' 
                        OR h.ip_addr <<= '0.0.0.0/32' 
@@ -47,9 +47,9 @@ def pingAvg(addresses = None):
                    ORDER BY date""")
     # Output data onto CSV
     # date, ping_rttmin, ping_rttavg, ping_rttmax
-    data = remCur.fetchall()
-    remCur.close()
-    remConn.close()
+    data = rem_cur.fetchall()
+    rem_cur.close()
+    rem_conn.close()
     df = pd.DataFrame(data, columns=['date', 'ping_rttmin', 'ping_rttavg', 'ping_rttmax'])
     return df
 
@@ -59,7 +59,7 @@ def main():
     parser.add_argument("-a", "--addresses", type=str, help="IP addresses to fetch data for")
     parser.add_argument("-o", "--output", type=str, help="Output file")
     args = parser.parse_args()
-    df = pingAvg(args.addresses)
+    df = ping_avg(args.addresses)
     if args.output:
         df.to_csv(args.output, index=False)
     else:

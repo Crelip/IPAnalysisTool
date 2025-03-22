@@ -6,8 +6,8 @@ def main():
             "launch": ("IPAnalysisTool.caching.graph_cache", "main"),
             "description": "Cache the graph data"
         },
-        "timeSeriesAnalysis": {
-            "launch": ("timeSeriesAnalysis", "main"),
+        "time_series_analysis": {
+            "launch": ("IPAnalysisTool.time_series_analysis", "main"),
             "description": "Gather data into a CSV file"
         },
         "hBackbone": {

@@ -11,12 +11,28 @@ class KCoreDecompositionResult(TypedDict):
     k_core_decomposition: VertexPropertyMap
     max_k: int
 
+class KCoreDecompositionMetadataEntry(TypedDict):
+    kcore: int
+    count: int
+    IPs: list[str]
+
+class KCoreDecompositionMetadata(TypedDict):
+    date: str
+    max_k: int
+    decomposition: list[KCoreDecompositionMetadataEntry]
+
+
 def k_core_decomposition(g: Graph) -> KCoreDecompositionResult:
+    """
+    Perform k-core decomposition on the given graph.
+    :param g: The graph to perform k-core decomposition on. (graph_tool.Graph)
+    :return: (dict) A dictionary containing the input graph, the k-core decomposition, and the maximum k-core value. (KCoreDecompositionResult)
+    """
     from .util.graph_manipulation import remove_reciprocal_edges
     from graph_tool.all import kcore_decomposition
-    # Do k-core decomposition on an undirected version of the graph
-    g = remove_reciprocal_edges(g)
-    k_core_prop = kcore_decomposition(g)
+    # Do k-core decomposition on a version of the graph without reciprocal edges
+    tmp_g = remove_reciprocal_edges(g)
+    k_core_prop = kcore_decomposition(tmp_g)
     groups = defaultdict(list)
     max_k = 0
     for v in g.vertices():
@@ -29,16 +45,32 @@ def k_core_decomposition(g: Graph) -> KCoreDecompositionResult:
         "max_k": max_k,
     }
 
-def get_k_core(k_core_data: dict, k : int):
+def get_k_core(k_core_data: KCoreDecompositionResult, k : int):
+    """
+    Get the k-core subgraph of the given graph for a given k.
+    :param k_core_data:
+    :param k:
+    :return:
+    """
     from graph_tool import GraphView
     vfilt = k_core_data["graph"].new_vertex_property("bool")
     for v in k_core_data["graph"].vertices(): vfilt[v] = k_core_data["k_core_decomposition"][v] >= k
     return GraphView(k_core_data["graph"], vfilt=vfilt)
 
-def get_max_k_core(k_core_data: dict):
+def get_max_k_core(k_core_data: KCoreDecompositionResult):
+    """
+    Get the maximum k-core subgraph of the given graph.
+    :param k_core_data:
+    :return:
+    """
     return get_k_core(k_core_data, k_core_data["max_k"])
 
-def get_k_core_metadata(k_core_data: dict):
+def get_k_core_metadata(k_core_data: KCoreDecompositionResult) -> dict:
+    """
+    Get the metadata for the k-core decomposition in a dict form.
+    :param k_core_data:
+    :return:
+    """
     from json import loads
     groups = defaultdict(list)
     for v in k_core_data["graph"].vertices():

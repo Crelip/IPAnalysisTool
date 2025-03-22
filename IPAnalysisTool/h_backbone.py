@@ -3,7 +3,7 @@ from .util.calculations import get_h_index
 from .visualize import visualize_graph
 
 # Get bridge of the network
-def addBridge(g: Graph, modifier = 1):
+def add_bridge(g: Graph, modifier = 1):
     from graph_tool.all import betweenness
     bridge = g.new_edge_property("double")
     g.edge_properties["bridge"] = bridge
@@ -29,7 +29,7 @@ def h_backbone(g: Graph,
     from json import loads
     date = loads(g.gp.metadata)["date"]
     g = GraphView(g, directed=False)
-    g = addBridge(g, modifier)
+    g = add_bridge(g, modifier)
     bridge = g.ep.bridge
     # H-Bridge calculation
     h_strength_property = g.ep.traversals

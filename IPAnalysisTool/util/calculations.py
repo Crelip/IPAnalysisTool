@@ -14,3 +14,16 @@ def get_h_index(g, values) -> int:
         if cumulative >= h:
             return h
     return 0
+
+
+def calculate_diameter(graph, weights=None) -> float:
+    """
+    Calculate the diameter of a graph.
+    :param graph: The graph to calculate the diameter of.
+    :param weights: The weights to use for the graph. Default is None, all edges will then have weight of 1.
+    :return: The diameter of the graph. (float)
+    """
+    from graph_tool.all import shortest_distance
+    from sortedcontainers import SortedSet
+    shortest_distances = shortest_distance(graph, directed=False, weights=weights)
+    return SortedSet(max(shortest_distances[v]) for v in graph.vertices())[-1]

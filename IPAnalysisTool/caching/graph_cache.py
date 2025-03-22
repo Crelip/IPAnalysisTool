@@ -51,13 +51,13 @@ def generate_interval_data(start, end, rem_cur, data_folder : str, verbose : boo
             address_to_vertex[address] = node
             vertex_to_address[node] = address
             ip_address[node] = address
-            min_node_distance[node] = times[i]
-            max_node_distance[node] = times[i]
+            min_node_distance[node] = times[i] / 2
+            max_node_distance[node] = times[i] / 2
             if collect_metadata: node_properties[node] = who.lookup(address)
         else:
             node = address_to_vertex[address]
-            if times[i] < min_node_distance[node]: min_node_distance[node] = times[i]
-            if times[i] > max_node_distance[node]: max_node_distance[node] = times[i]
+            if times[i] < min_node_distance[node]: min_node_distance[node] = times[i] / 2
+            if times[i] > max_node_distance[node]: max_node_distance[node] = times[i] / 2
         if address == endpoint:
             position_in_route[node] = 2
         return node
@@ -153,7 +153,7 @@ def generate_interval_data(start, end, rem_cur, data_folder : str, verbose : boo
                     existing_edges[(src_address, dest_address)] = edge
                     traversals_num[edge] = 1
                     if weighted_edges:
-                        min_edge_weight[edge] = times[i] - (times[i - 1] if i > 0 else 0)
+                        min_edge_weight[edge] = (times[i] - (times[i - 1] if i > 0 else 0)) / 2
                 # Update edge's weights if it does exist
                 else:
                     edge = existing_edges[(src_address, dest_address)]
@@ -198,7 +198,7 @@ def generate_interval_data(start, end, rem_cur, data_folder : str, verbose : boo
     who.close()
 
 # For each week, generate a graph using generateOutput()
-def generateWeeklyData(start: datetime.date, end: datetime.date, verbose: bool, weightedEdges : bool = False, collectMetadata : bool = False):
+def generate_weekly_data(start: datetime.date, end: datetime.date, verbose: bool = False, weightedEdges : bool = False, collectMetadata : bool = False):
     # Database connection setup
     rem_conn, rem_cur = connect_to_remote_db()
 
@@ -264,6 +264,6 @@ def main(args = None):
     else:
         start, end = get_database_range()
 
-    generateWeeklyData(start, end, args.verbose, args.weighted_edges, args.metadata)
+    generate_weekly_data(start, end, args.verbose, args.weighted_edges, args.metadata)
 
 if __name__ == "__main__": main()
