@@ -13,9 +13,16 @@ def get_geo_data(ips: Iterable[str]) -> dict[str, dict]:
         return None
 
     from maxminddb import open_database
-    with open_database(geo_data) as db:
+    with (open_database(geo_data) as db):
         print("Geo data loaded successfully. IP Geolocation by DB-IP: https://dp-ip.com")
         def get_geo_single(ip):
+            if ip == "127.0.0.1":
+                from json import load
+                try:
+                    with open(expanduser("~/.config/IPAnalysisTool/localhost_geo.json")) as f:
+                        return load(f)
+                except:
+                    print("Localhost geo data not found. Using default.")
             try:
                 return db.get(ip)
             except:

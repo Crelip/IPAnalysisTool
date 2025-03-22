@@ -13,11 +13,10 @@ def visualize_graph(g: Graph, name: str, prop: str = "ip"):
             output=f"scratchpad/{name}.svg"
                   )
 
-def visualize_graph_world(g: Graph, name: str, prop: str = "ip", geo_data = None):
+def visualize_graph_world(g: Graph, name: str, geo_data = None):
     from graph_tool.all import graph_draw, group_vector_property
     from mpl_toolkits.basemap import Basemap
     import matplotlib.pyplot as plt
-    import graph_tool.all as gt
     if geo_data is None:
         from IPAnalysisTool.util.geoDataUtil import get_geo_data
         geo_data = get_geo_data(g.vp.ip[v] for v in g.vertices())
@@ -34,7 +33,7 @@ def visualize_graph_world(g: Graph, name: str, prop: str = "ip", geo_data = None
         except Exception as e:
             print(f"Error positioning vertex for IP {ip}: {e}")
 
-    pos = gt.group_vector_property([lon, lat])
+    pos = group_vector_property([lon, lat])
 
     m = Basemap(
         projection="merc",
@@ -47,8 +46,11 @@ def visualize_graph_world(g: Graph, name: str, prop: str = "ip", geo_data = None
 
     m.shadedrelief(scale=.2)
 
-    a = graph_draw(g, pos=pos.t(lambda x: m(*x)),  # project positions
-                      edge_color=(.1, .1, .1, .1), mplfig=ax)
+    a = graph_draw(g,
+                pos=pos.t(lambda x: m(*x)),
+                edge_color=(.1, .1, .1, .1),
+                mplfig=ax,
+                   )
 
     a.fit_view()
     a.set_zorder(10)
