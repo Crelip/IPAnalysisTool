@@ -10,7 +10,7 @@ def main():
         from IPAnalysisTool.hBackbone import main as hBackbone
         hBackbone(sys.argv[2:])
     elif sys.argv[1] == "kcore":
-        from IPAnalysisTool.kcore import main as kCore
+        from IPAnalysisTool.k_core import main as kCore
         kCore(sys.argv[2:])
     else:
         print("""Welcome to IPAnalysisTool!

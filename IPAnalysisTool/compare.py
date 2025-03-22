@@ -9,9 +9,9 @@ def edgeRepr(e, ipProp):
 # About to deprecate this function, redundant code
 def compareKCoreAndHBackbone(datetime: date):
     from hBackbone import hBackbone
-    from kcore import kCoreDecompositionFromDate
+    from k_core import k_core_decomposition_from_date
     hBackboneGraph = hBackbone(datetime, output="graph")
-    kCoreData = kCoreDecompositionFromDate(datetime, output="graph")
+    kCoreData = k_core_decomposition_from_date(datetime, output="graph")
     print(kCoreData)
     kCoreGraph, kCore = kCoreData[0], kCoreData[1]
     maxK = max(kCore[v] for v in kCoreGraph.vertices())

@@ -11,7 +11,7 @@
 from anyio import current_effective_deadline
 
 from util.weekUtil import getWeekDates, getDateString, getDateObject, getCacheDateRange
-from kcore import kCoreDecompositionFromDate
+from k_core import k_core_decomposition_from_date
 import graph_tool.all as gt
 import numpy as np
 import pandas as pd
@@ -33,7 +33,7 @@ def calculateUnweightedDiameter(graph):
 
 def processDate(i, date, verbose = False, weekLong = False, weighted = False):
     try:
-        currentGraph, currentKcore, _ = kCoreDecompositionFromDate(date, weighted=weighted, output="graph")
+        currentGraph, currentKcore, _ = k_core_decomposition_from_date(date, weighted=weighted, output="graph")
     except KeyError:
         return i, None, None, None, None, None, np.zeros(31, dtype=int)
 
