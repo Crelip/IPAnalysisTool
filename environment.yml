@@ -1,18 +1,23 @@
-name: IPAnalysisTool
+name: ip_analysis_tool
 channels:
   - defaults
   - conda-forge
   - https://repo.anaconda.com/pkgs/main
   - https://repo.anaconda.com/pkgs/r
 dependencies:
+  # Notebook
+  - jupyter
+  # Building the library
+  - conda-build
+  # Building the standalone application
+  - pyinstaller=5.13.2
+  # General
   - basemap=1.4.1
   - graph-tool=2.92
-  - jupyter
   - maxminddb=2.6.2
   - pandas=2.2.3
   - pip
   - psycopg2
-  - pyinstaller=5.13.2
   - pyproj=3.6.0
   - python=3.11
   - pyyaml

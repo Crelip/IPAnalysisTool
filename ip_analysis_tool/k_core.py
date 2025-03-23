@@ -3,7 +3,7 @@ from graph_tool import Graph, VertexPropertyMap
 
 from collections import defaultdict
 
-from IPAnalysisTool.util.graph_getter import get_graph_by_date
+from ip_analysis_tool.util.graph_getter import get_graph_by_date
 from .util.week_util import get_date_string
 
 class KCoreDecompositionResult(TypedDict):

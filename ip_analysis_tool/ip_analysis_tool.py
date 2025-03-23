@@ -3,25 +3,25 @@ def main():
     from importlib import import_module
     commands = {
         "graph_cache": {
-            "launch": ("IPAnalysisTool.caching.graph_cache", "main"),
+            "launch": ("ip_analysis_tool.caching.graph_cache", "main"),
             "description": "Cache the graph data"
         },
         "time_series_analysis": {
-            "launch": ("IPAnalysisTool.time_series_analysis", "main"),
+            "launch": ("ip_analysis_tool.time_series_analysis", "main"),
             "description": "Gather data into a CSV file"
         },
         "hBackbone": {
-            "launch": ("IPAnalysisTool.hBackbone", "main"),
+            "launch": ("ip_analysis_tool.hBackbone", "main"),
             "description": "Find the hBackbone of a network"
         },
         "k_core": {
-            "launch": ("IPAnalysisTool.k_core", "main"),
+            "launch": ("ip_analysis_tool.k_core", "main"),
             "description": "Find the k-core of a network"
         }
     }
 
     if len(sys.argv) < 2 or sys.argv[1] not in commands:
-        print("Welcome to IPAnalysisTool!\nAvailable commands:\n" +
+        print("Welcome to ip_analysis_tool!\nAvailable commands:\n" +
               '\n'.join([f'{command}: {commands[command]["description"]}' for command in commands.keys()]) +
               f'\nUsage: {sys.argv[0]} <command> <args>' +
               '\nIf you need help with any command, use the -h or --help flag after the command name.')

@@ -1,6 +1,6 @@
 def connect_to_remote_db() -> tuple:
     """
-    Connect to the remote database using the login details stored in ~/.config/IPAnalysisTool/config.yml
+    Connect to the remote database using the login details stored in ~/.config/ip_analysis_tool/config.yml
     :return: tuple of the psycopg2 connection and cursor objects
     """
     import psycopg2

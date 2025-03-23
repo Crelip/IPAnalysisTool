@@ -97,9 +97,9 @@ def disparity_filter(g : Graph, percentile_threshold = 50.0):
 
 def main():
     from argparse import ArgumentParser
-    from IPAnalysisTool.util.graph_getter import get_graph_by_date
-    from IPAnalysisTool.visualize import visualize_graph
-    from IPAnalysisTool.util.week_util import get_date_object
+    from ip_analysis_tool.util.graph_getter import get_graph_by_date
+    from ip_analysis_tool.visualize import visualize_graph
+    from ip_analysis_tool.util.week_util import get_date_object
     parser = ArgumentParser()
     parser.add_argument("-d", "--date", help="Date to process", type=str)
     parser.add_argument("-p", "--percentile", help="Percentile threshold", type=float, default=50.0)

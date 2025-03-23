@@ -4,7 +4,7 @@ from PyInstaller.utils.hooks import collect_data_files
 datas = collect_data_files('mpl_toolkits')
 
 a = Analysis(
-    ['IPAnalysisTool/IPAnalysisTool.py'],
+    ['ip_analysis_tool/ip_analysis_tool.py'],
     pathex=[],
     binaries=[],
     datas=datas,

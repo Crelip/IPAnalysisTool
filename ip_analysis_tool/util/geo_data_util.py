@@ -9,7 +9,7 @@ def get_geo_data(ips: Iterable[str]) -> dict[str, dict]:
                     geo_data = file.path
                     break
     except:
-        print("Geo data not found. Download the IP To City Lite database in the MMDB form from https://db-ip.com/db/download/ip-to-city-lite and put it in the folder ~/.cache/IPAnalysisTool/geo_data/")
+        print("Geo data not found. Download the IP To City Lite database in the MMDB form from https://db-ip.com/db/download/ip-to-city-lite and put it in the folder ~/.cache/ip_analysis_tool/geo_data/")
         return None
 
     from maxminddb import open_database

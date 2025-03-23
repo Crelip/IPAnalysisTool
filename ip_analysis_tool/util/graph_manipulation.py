@@ -24,7 +24,7 @@ def remove_reciprocal_edges(g: Graph):
 def continous_subgraph(disconnected_graph : Graph, base_graph : Graph, weight = None):
     from itertools import combinations
     from graph_tool.all import Graph, shortest_distance, min_spanning_tree
-    from IPAnalysisTool.util.graph_util import map_vertices_by_property
+    from ip_analysis_tool.util.graph_util import map_vertices_by_property
     '''
     Returns a continuous subgraph from a disconnected graph
     :param disconnected_graph: a subgraph of base_graph

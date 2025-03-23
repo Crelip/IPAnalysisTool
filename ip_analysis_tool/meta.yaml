@@ -1,0 +1,42 @@
+package:
+  name: ip_analysis_tool
+  version: "0.1.0"
+
+source:
+  path: .
+
+build:
+  noarch: python
+  number: 0
+  script: "{{ PYTHON }} -m pip install . --no-deps -vv"
+
+requirements:
+  channels:
+    - defaults
+    - conda-forge
+    - https://repo.anaconda.com/pkgs/main
+    - https://repo.anaconda.com/pkgs/r
+  build:
+    - python=3.11
+    - pip
+  run:
+    - basemap=1.4.1
+    - graph-tool=2.92
+    - maxminddb=2.6.2
+    - pandas=2.2.3
+    - psycopg2
+    - pyproj=3.6.0
+    - pyyaml
+    - python=3.11
+    - scikit-learn
+    - sortedcontainers
+    - statsmodels
+
+test:
+  commands:
+    - python -c "import ip_analysis_tool"
+
+about:
+    home: https://github.com/username/IPAnalysisTool
+    license: GPL-3.0
+    summary: A tool for analyzing data related to computer networks.
