@@ -146,7 +146,7 @@ def time_series_analysis(verbose=False, date_range=None, max_threads=1, week_lon
     radius = np.zeros(all_dates_count, dtype=float)
     k_core_sizes = np.zeros((all_dates_count, 31), dtype=int)
     max_k_cores = np.zeros(all_dates_count, dtype=int)
-    max_k_core_sizes = np.zeros((all_dates_count, 31), dtype=int)
+    max_k_core_sizes = np.zeros(all_dates_count, dtype=int)
 
     # Use ProcessPoolExecutor to process dates in parallel
     with concurrent.futures.ProcessPoolExecutor(max_workers=max_threads) as executor:
