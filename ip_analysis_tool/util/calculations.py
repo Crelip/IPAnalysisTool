@@ -1,5 +1,5 @@
-from collections.abc import Iterable
 from math import floor
+from graph_tool import VertexPropertyMap
 
 def get_h_index(g, values) -> int:
     n = g.num_edges()
@@ -27,3 +27,21 @@ def calculate_diameter(graph, weights=None) -> float:
     from sortedcontainers import SortedSet
     shortest_distances = shortest_distance(graph, directed=False, weights=weights)
     return SortedSet(max(shortest_distances[v]) for v in graph.vertices())[-1]
+
+def calculate_edge_betweenness(g) -> VertexPropertyMap:
+    from graph_tool.topology import all_shortest_paths
+    ans = g.new_edge_property("float")
+    for e in g.edges():
+        current = 0.0
+        for v in g.vertices():
+            for u in g.vertices():
+                if v > u:
+                    appearances = 0.0
+                    total = 0.0
+                    paths = all_shortest_paths(g, v, u, edges=True)
+                    for path in paths:
+                        total += 1.0
+                        if e in path: appearances += 1.0
+                        current += appearances / total
+        ans[e] = current
+    return ans

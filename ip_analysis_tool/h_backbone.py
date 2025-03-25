@@ -4,14 +4,10 @@ from .visualize import visualize_graph
 
 # Get bridge of the network
 def add_bridge(g: Graph, modifier = 1):
-    from graph_tool.all import betweenness
+    from .util.calculations import calculate_edge_betweenness
     bridge = g.new_edge_property("double")
     g.edge_properties["bridge"] = bridge
-    _, edge_betweenness = betweenness(g)
-    edge_betweenness = {e: edge_betweenness[e] for e in g.edges()}
-    # print(g.num_vertices())
-    # print(g.num_edges())
-    # print(max([edgeBetweenness[e] for e in g.edges()]))
+    edge_betweenness = calculate_edge_betweenness(g)
 
     num_vertices = g.num_vertices()
     # Modified bridge measurement
@@ -70,13 +66,13 @@ def main(args = None):
     parser.add_argument("-d", "--date", help="Generates data for the week containing the given date.")
     parser.add_argument("-s", "--visualize", action="store_true", help="Visualizes the graph.")
     parser.add_argument("-m", "--modifier", type=int, help="Modifier for the bridge calculation.")
-    parser.add_argument("-w", "--weightedEdges", action="store_true", help="Use graph with weighted edges.")
+    parser.add_argument("-w", "--weighted_edges", action="store_true", help="Use graph with weighted edges.")
     parser.add_argument("-v", "--verbose", action="store_true", help="Prints the output.")
 
     args = parser.parse_args(args)
 
     modifier = args.modifier or 1
-    h_backbone(get_graph_by_date(get_date_object(args.date), args.weightedEdges), modifier=modifier, visualize=args.visualize, verbose=args.verbose)
+    h_backbone(get_graph_by_date(get_date_object(args.date), args.weighted_edges), modifier=modifier, visualize=args.visualize, verbose=args.verbose)
     # print(dumps(hBackbone(datetime.datetime.strptime(args.date, "%Y-%m-%d").date(), modifier=args.modifier, visualize=args.visualize), indent=2))
 
 
