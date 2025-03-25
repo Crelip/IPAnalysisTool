@@ -4,10 +4,10 @@ from .visualize import visualize_graph
 
 # Get bridge of the network
 def add_bridge(g: Graph, modifier = 1):
-    from .util.calculations import calculate_edge_betweenness
+    from graph_tool.centrality import betweenness
     bridge = g.new_edge_property("double")
     g.edge_properties["bridge"] = bridge
-    edge_betweenness = calculate_edge_betweenness(g)
+    _, edge_betweenness = betweenness(g, norm=False)
 
     num_vertices = g.num_vertices()
     # Modified bridge measurement
