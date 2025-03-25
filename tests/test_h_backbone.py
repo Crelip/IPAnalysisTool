@@ -123,10 +123,71 @@ def dummy_output_graph_2():
     g.gp.metadata = '{"date": "2022-05-12"}'
     return g
 
+@pytest.fixture
+def dummy_input_graph_3():
+    g = Graph(
+        [
+            ("1", "2", 3),
+            ("1", "3", 4), # Should stay in h-backbone
+            ("1", "4", 6), # Should stay in h-backbone
+            ("1", "5", 1), # Should stay in h-backbone
+            ("5", "6", 2),
+            ("5", "7", 3),
+            ("5", "8", 9), # Should stay in h-backbone
+            ("5", "9", 5), # Should stay in h-backbone
+        ],
+        eprops=[("traversals", "int")],
+        hashed=True,
+        directed=False
+    )
+    g.gp["metadata"] = g.new_graph_property("string")
+    g.gp.metadata = '{"date": "2023-09-30"}'
+    return g
+
+@pytest.fixture
+def dummy_output_graph_3():
+    g = Graph(
+        [
+            ("1", "3", 4),
+            ("1", "4", 6),
+            ("1", "5", 1),
+            ("5", "8", 9),
+            ("5", "9", 5),
+        ],
+        eprops=[("traversals", "int")],
+        hashed=True,
+        directed=False
+    )
+    g.gp["metadata"] = g.new_graph_property("string")
+    g.gp.metadata = '{"date": "2023-09-30"}'
+    return g
+
+# H-backbone of a graph with no edges should be an empty graph
+@pytest.fixture
+def dummy_input_graph_4():
+    g = Graph(
+        directed=False,
+    )
+    g.ep["traversals"] = g.new_edge_property("int")
+    for _ in range(20): g.add_vertex()
+    g.gp["metadata"] = g.new_graph_property("string")
+    g.gp.metadata = '{"date": "2023-09-30"}'
+    return g
+
 def test_h_backbone_1(dummy_input_graph_1, dummy_output_graph_1):
-    result = h_backbone(dummy_input_graph_1, modifier=1, visualize=False, output="graph", verbose=False)
+    result = h_backbone(dummy_input_graph_1, visualize=False, output="graph", verbose=False)
     assert graphs_equal(result, dummy_output_graph_1)
 
 def test_h_backbone_2(dummy_input_graph_2, dummy_output_graph_2):
-    result = h_backbone(dummy_input_graph_2, modifier=1, visualize=False, output="graph", verbose=False)
+    result = h_backbone(dummy_input_graph_2, visualize=False, output="graph", verbose=False)
     assert graphs_equal(result, dummy_output_graph_2)
+
+def test_h_backbone_3(dummy_input_graph_3, dummy_output_graph_3):
+    result = h_backbone(dummy_input_graph_3, visualize=False, output="graph", verbose=False)
+    assert graphs_equal(result, dummy_output_graph_3)
+
+# H-backbone of a graph with no edges should be an empty graph
+def test_h_backbone_4(dummy_input_graph_4):
+    result = h_backbone(dummy_input_graph_4, visualize=False, output="graph", verbose=False)
+    assert result.num_vertices() == 0, "H-backbone of a graph with no edges should be an empty graph"
+    assert result.num_edges() == 0, "H-backbone of a graph with no edges should be an empty graph"

@@ -3,21 +3,19 @@ from .util.calculations import get_h_index
 from .visualize import visualize_graph
 
 # Get bridge of the network
-def add_bridge(g: Graph, modifier = 1):
+def add_bridge(g: Graph):
     from graph_tool.centrality import betweenness
     bridge = g.new_edge_property("double")
     g.edge_properties["bridge"] = bridge
     _, edge_betweenness = betweenness(g, norm=False)
 
     num_vertices = g.num_vertices()
-    # Modified bridge measurement
     for e in g.edges():
-        bridge[e] = (edge_betweenness[e] / num_vertices) * modifier
+        bridge[e] = (edge_betweenness[e] / num_vertices)
     return g
 
 # Get H-Backbone of the network
 def h_backbone(g: Graph,
-               modifier = 1,
                visualize = False,
                output = "json",
                verbose = False):
@@ -25,7 +23,7 @@ def h_backbone(g: Graph,
     from json import loads
     date = loads(g.gp.metadata)["date"]
     g = GraphView(g, directed=False)
-    g = add_bridge(g, modifier)
+    g = add_bridge(g)
     bridge = g.ep.bridge
     # H-Bridge calculation
     h_strength_property = g.ep.traversals
@@ -65,14 +63,12 @@ def main(args = None):
     parser = ArgumentParser()
     parser.add_argument("-d", "--date", help="Generates data for the week containing the given date.")
     parser.add_argument("-s", "--visualize", action="store_true", help="Visualizes the graph.")
-    parser.add_argument("-m", "--modifier", type=int, help="Modifier for the bridge calculation.")
     parser.add_argument("-w", "--weighted_edges", action="store_true", help="Use graph with weighted edges.")
     parser.add_argument("-v", "--verbose", action="store_true", help="Prints the output.")
 
     args = parser.parse_args(args)
 
-    modifier = args.modifier or 1
-    h_backbone(get_graph_by_date(get_date_object(args.date), args.weighted_edges), modifier=modifier, visualize=args.visualize, verbose=args.verbose)
+    h_backbone(get_graph_by_date(get_date_object(args.date), args.weighted_edges), visualize=args.visualize, verbose=args.verbose)
     # print(dumps(hBackbone(datetime.datetime.strptime(args.date, "%Y-%m-%d").date(), modifier=args.modifier, visualize=args.visualize), indent=2))
 
 
