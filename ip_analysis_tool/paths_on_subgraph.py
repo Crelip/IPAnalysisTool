@@ -16,9 +16,8 @@ def paths_on_subgraph(subgraph : Graph, graph : Graph) -> PathsOnSubgraphResult:
     from graph_tool.util import find_vertex
     subgraph_routes = set()
     for v in subgraph.vertices(): subgraph_routes.update(subgraph.vp.routes[v])
-    # All routes start from 127.0.0.1
     original_routes_count = len(graph.vp.routes[
-        list(find_vertex(graph, graph.vp.ip, "127.0.0.1"))[0]
+        list(find_vertex(graph, graph.vp.position_in_route, 1))[0]
                                 ])
     return {
         "subgraph_routes_count": len(subgraph_routes),

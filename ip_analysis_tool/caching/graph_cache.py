@@ -101,15 +101,6 @@ def generate_interval_data(start, end, rem_cur, data_folder : str, verbose : boo
         g.edge_properties['max_weight'] = max_edge_weight
         g.edge_properties['min_weight'] = min_edge_weight
 
-    # Adding starting IP address
-    starting_address = "127.0.0.1"
-    node = g.add_vertex()
-    address_to_vertex[starting_address] = node
-    vertex_to_address[node] = starting_address
-    ip_address[node] = starting_address
-    position_in_route[node] = 1
-    node_distances[node] = [0]
-
     rem_cur.execute(f"""
                     SELECT t_route, t_roundtrip, t_date FROM topology t JOIN non_reserved_ip n ON n.ip_addr = t.ip_addr
                        WHERE NOT ('0.0.0.0/32' = ANY(t_route))
@@ -127,12 +118,18 @@ def generate_interval_data(start, end, rem_cur, data_folder : str, verbose : boo
         times = record[1]
         if weighted_edges and not is_nondecreasing_array(times): continue
         date = record[2]
+        # Get the starting vertex
+        if route_index == 0:
+            starting_vertex = g.add_vertex()
+            starting_address = route[0].split("/")[0]
+            g.vp.ip[starting_vertex] = starting_address
+            address_to_vertex[starting_address] = starting_vertex
+            vertex_to_address[starting_vertex] = starting_address
+            position_in_route[starting_vertex] = 1
         endpoint = route[-1].split("/")[0]
         route_length = len(route)
-        g.vp.routes[address_to_vertex["127.0.0.1"]].append(route_index)
-        for i in range(route_length):
-            if i == 0: src, dest = starting_address, route[i]
-            else: src, dest = route[i - 1], route[i]
+        for i in range(route_length - 1):
+            src, dest = route[i], route[i + 1]
 
             if not(src == '0.0.0.0/32' or dest == '0.0.0.0/32') and src != dest:
                 src_address = src.split("/")[0]
