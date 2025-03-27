@@ -36,7 +36,7 @@ def process_date(i, date, verbose=False, week_long=False, weighted_edges=False) 
     """
     from .util.graph_getter import get_graph_by_date
     from .util.calculations import calculate_diameter
-    from .util.week_util import get_date_string
+    from .util.date_util import get_date_string
     from .k_core import k_core_decomposition
     from json import loads
 
@@ -118,12 +118,12 @@ def process_date(i, date, verbose=False, week_long=False, weighted_edges=False) 
 
 
 def time_series_analysis(verbose=False, date_range=None, max_threads=1, week_long=False, weighted_edges=False):
-    from .util.week_util import get_week_dates, get_date_string, get_date_object, get_cache_date_range
+    from .util.date_util import iterate_weekly, get_date_string, get_date_object, get_cache_date_range
     import concurrent.futures
     from functools import partial
 
     graph_date_range = get_cache_date_range()
-    dates = [date[0] for date in get_week_dates(graph_date_range[0], graph_date_range[1])]
+    dates = [date[0] for date in iterate_weekly(graph_date_range[0], graph_date_range[1])]
     if date_range:
         date_range = [get_date_object(date) for date in date_range]
         earliest_date = max(min(dates), date_range[0])
@@ -134,7 +134,7 @@ def time_series_analysis(verbose=False, date_range=None, max_threads=1, week_lon
     if earliest_date > latest_date:
         return None
 
-    all_dates = [date[0] for date in get_week_dates(earliest_date, latest_date)]
+    all_dates = [date[0] for date in iterate_weekly(earliest_date, latest_date)]
     all_dates_count = len(all_dates)
     if verbose: print(f"Processing {all_dates_count} dates")
 

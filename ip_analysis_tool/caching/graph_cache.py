@@ -1,18 +1,13 @@
-# Script for collecting graph data over weeks and turning it into graphs
-# Splits data weekly
-# By default, the script goes through all weeks for which a record does exist.
-# -i [YYYY-MM-DD] [YYYY-MM-DD]: Generates a graph only for the list of weeks which begin with the week containing the first given date and ends with the week containing the second given date.
-# -t [YYYY-MM-DD]: Generates a graph only for the aforementioned weeks which include the given date.
-
 from datetime import datetime, timedelta
 import os
 from graph_tool import Graph
 from typing import Tuple
-from ..util.week_util import get_week, get_week_dates, get_date_string
+from ..util.date_util import get_parent_interval, iterate_range, get_date_string
 from ..util.whois_util import WhoIs
 from ..util.database_util import connect_to_remote_db
 from json import dumps
 from sortedcontainers import SortedSet
+from ..enums import TimeInterval
 
 def is_nondecreasing_array(arr):
     size = len(arr)
@@ -21,28 +16,8 @@ def is_nondecreasing_array(arr):
             return False
     return True
 
-# Gets the earliest and latest date in the database
-def get_database_range() -> Tuple[datetime.date, datetime.date]:
-    # Database connection setup
-    rem_conn, rem_cur = connect_to_remote_db()
-
-    # Get the earliest date
-    rem_cur.execute("SELECT MIN(t_date) FROM topology")
-    record = rem_cur.fetchone()
-    earliest_date = record[0]
-
-    # Get the latest date
-    rem_cur.execute("SELECT MAX(t_date) FROM topology")
-    record = rem_cur.fetchone()
-    latest_date = record[0]
-
-    rem_cur.close()
-    rem_conn.close()
-
-    return earliest_date, latest_date
-
 # Generates a graph based on all data from start date to end date
-def generate_interval_data(start, end, rem_cur, data_folder : str, verbose : bool, weighted_edges : bool = False, collect_metadata : bool = False):
+def generate_interval_data(start, end, rem_cur, data_folder : str, verbose : bool, weighted_edges : bool = False, collect_metadata : bool = False, time_interval : TimeInterval = TimeInterval.WEEK):
 
     # Adding a node to the graph
     def add_node(g, address, times, i, endpoint):
@@ -87,7 +62,7 @@ def generate_interval_data(start, end, rem_cur, data_folder : str, verbose : boo
     g.vp["routes"] = g.new_vertex_property("vector<int>")
     g.ep["routes"] = g.new_edge_property("vector<int>")
 
-    who = WhoIs()
+    if collect_metadata: who = WhoIs()
     address_to_vertex = {}
     vertex_to_address = {}
 
@@ -106,7 +81,7 @@ def generate_interval_data(start, end, rem_cur, data_folder : str, verbose : boo
                        WHERE NOT ('0.0.0.0/32' = ANY(t_route))
                        AND t_status = 'C'
                        AND t_date >= '{start}'
-                       AND t_date < '{end}'
+                       AND t_date <= '{end}'
                        AND t_hops > 1
 """)
 
@@ -184,22 +159,23 @@ def generate_interval_data(start, end, rem_cur, data_folder : str, verbose : boo
     g.gp["metadata"] = dumps({
         "date": start,
         "route_dates": [get_date_string(date) for date in route_dates],
-        "weighted_edges": weighted_edges
+        "weighted_edges": weighted_edges,
+        "time_interval": str(time_interval).lower()
          })
     data_folder = data_folder + f"/{'base' if not weighted_edges else 'weighted'}"
     if not os.path.exists(data_folder): os.makedirs(data_folder)
     g.save(f"{data_folder}/{start}.gt")
     if verbose:
-        print(f"Generated{' weighted' if weighted_edges else ''} graph for week starting with {start}.")
+        print(f"Generated{' weighted' if weighted_edges else ''} graph for the {str(time_interval).lower()} starting with {start}.")
         print(f"Number of vertices: {g.num_vertices()}\nNumber of edges: {g.num_edges()}")
-    who.close()
+    if collect_metadata: who.close()
 
-# For each week, generate a graph using generateOutput()
-def generate_weekly_data(start: datetime.date, end: datetime.date, verbose: bool = False, weightedEdges : bool = False, collectMetadata : bool = False):
+# For each time interval, generate a graph
+def generate_data(start: datetime.date, end: datetime.date, verbose: bool = False, weighted_edges : bool = False, collect_metadata : bool = False, time_interval : TimeInterval = TimeInterval.WEEK):
     # Database connection setup
     rem_conn, rem_cur = connect_to_remote_db()
 
-    data_folder : str = os.path.expanduser("~/.cache/IPAnalysisTool/graphs/week")
+    data_folder : str = os.path.expanduser(f"~/.cache/IPAnalysisTool/graphs/{str(time_interval).lower()}")
     if not os.path.exists(data_folder):
         os.makedirs(data_folder)
 
@@ -232,10 +208,20 @@ def generate_weekly_data(start: datetime.date, end: datetime.date, verbose: bool
                         )
                     )"""
                    )
-    if verbose: print("Created non_reserved_ip table.")
-    weeks = get_week_dates(start, end)
-    for week in weeks:
-        generate_interval_data(week[0], week[0] + timedelta(days=7), rem_cur, data_folder, verbose, weightedEdges)
+    if verbose:
+        print("Created non_reserved_ip table.")
+        print(f"Generating graphs by {str(time_interval).lower()}.")
+
+    # If we don't do across all the data, we split it into intervals
+    if time_interval != TimeInterval.ALL:
+        intervals = iterate_range(start, end, time_interval)
+        for interval in intervals:
+            generate_interval_data(interval[0], interval[1] + timedelta(days=1), rem_cur, data_folder, verbose, weighted_edges, time_interval=time_interval)
+    # Else if we want the data from the entire range
+    else:
+        from ..util.database_util import get_database_range
+        start, end = get_database_range()
+        generate_interval_data(start, end + timedelta(days=1), rem_cur, data_folder, verbose, weighted_edges, time_interval=time_interval)
 
     rem_cur.close()
     rem_conn.close()
@@ -243,24 +229,30 @@ def generate_weekly_data(start: datetime.date, end: datetime.date, verbose: bool
 def main(args = None):
     from argparse import ArgumentParser
     parser = ArgumentParser()
-    parser.add_argument("-i", "--interval", nargs=2,
-                        help="Generates a graph only for the aforementioned time interval which begins with the interval containing the first given date and ends with the interval containing the second given date.")
+    parser.add_argument("-r", "--range", nargs=2,
+                        help="Generates a graph only for the aforementioned time range which begins with the interval containing the first given date and ends with the interval containing the second given date.")
     parser.add_argument("-t", "--time",
                         help="Generates a graph only for the aforementioned time interval which includes the given date.")
+    parser.add_argument("-i", "--interval", default="WEEK",
+                        help="""Splits the data among time intervals.
+                        POSSIBLE VALUES: DAY, WEEK, MONTH, YEAR, ALL, default: WEEK
+                        """)
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
     parser.add_argument("-w", "--weighted_edges", action="store_true", help="Use edge weights")
     parser.add_argument("-m", "--metadata", action="store_true", help="Collect information about each IP address from WHOIS. May take a very long time.")
 
     args = parser.parse_args(args)
 
-    if args.interval:
-        start = get_week(datetime.strptime(args.interval[0], "%Y-%m-%d"))[0]
-        end = get_week(datetime.strptime(args.interval[1], "%Y-%m-%d"))[1]
-    elif args.time:
-        start, end = get_week(datetime.strptime(args.time, "%Y-%m-%d"))
+    time_interval = TimeInterval[args.interval.upper()]
+    if args.range and time_interval != TimeInterval.ALL:
+        start = get_parent_interval(datetime.strptime(args.range[0], "%Y-%m-%d"), time_interval=time_interval)[0]
+        end = get_parent_interval(datetime.strptime(args.range[1], "%Y-%m-%d"), time_interval=time_interval)[1]
+    elif args.time and time_interval != TimeInterval.ALL:
+        start, end = get_parent_interval(datetime.strptime(args.time, "%Y-%m-%d"), time_interval=time_interval)
     else:
+        from ..util.database_util import get_database_range
         start, end = get_database_range()
 
-    generate_weekly_data(start, end, args.verbose, args.weighted_edges, args.metadata)
+    generate_data(start, end, args.verbose, args.weighted_edges, args.metadata, time_interval=time_interval)
 
 if __name__ == "__main__": main()

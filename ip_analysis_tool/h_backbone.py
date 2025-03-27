@@ -57,7 +57,7 @@ def h_backbone(g: Graph,
 def main(args = None):
     from argparse import ArgumentParser
     from .util.graph_getter import get_graph_by_date
-    from .util.week_util import get_date_object
+    from .util.date_util import get_date_object
     from json import dumps
 
     parser = ArgumentParser()

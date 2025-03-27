@@ -1,3 +1,5 @@
+import datetime
+from typing import Tuple
 def connect_to_remote_db() -> tuple:
     """
     Connect to the remote database using the login details stored in ~/.config/ip_analysis_tool/config.yml
@@ -51,3 +53,23 @@ def connect_to_local_db() -> tuple:
     loc_conn = sqlite3.connect(expanduser("~/.cache/IPAnalysisTool/data.db"))
     loc_cur = loc_conn.cursor()
     return loc_conn, loc_cur
+
+# Gets the earliest and latest date in the database
+def get_database_range() -> Tuple[datetime.date, datetime.date]:
+    # Database connection setup
+    rem_conn, rem_cur = connect_to_remote_db()
+
+    # Get the earliest date
+    rem_cur.execute("SELECT MIN(t_date) FROM topology")
+    record = rem_cur.fetchone()
+    earliest_date = record[0]
+
+    # Get the latest date
+    rem_cur.execute("SELECT MAX(t_date) FROM topology")
+    record = rem_cur.fetchone()
+    latest_date = record[0]
+
+    rem_cur.close()
+    rem_conn.close()
+
+    return earliest_date, latest_date
