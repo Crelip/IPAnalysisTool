@@ -57,6 +57,9 @@ def iterate_range(start_date : datetime.date, end_date : datetime.date, time_int
     elif time_interval == TimeInterval.YEAR:
         delta = relativedelta(years=1)
         current_first, current_last = get_parent_year(start_date)
+    elif time_interval == TimeInterval.ALL:
+        from .database_util import get_database_range
+        return [get_database_range()]
 
     while current_first <= end_date:
         intervals.append((current_first, current_last))

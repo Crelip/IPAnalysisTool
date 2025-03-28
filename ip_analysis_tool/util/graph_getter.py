@@ -1,4 +1,4 @@
-from graph_tool import Graph
+from graph_tool import Graph, load_graph
 import os
 import datetime
 from .date_util import get_parent_week, get_parent_interval
@@ -9,15 +9,17 @@ def get_graph_by_date(date, weighted_edges = False, time_interval : TimeInterval
     Returns the graph for the week containing the given date.
     :param date: The date to get the graph for (can be either datetime.date, or string in format YYYY-MM-DD). (datetime.date or str)
     :param weighted_edges: Whether to get the graph with weighted edges. Default is False. Graphs with weighted edges have much less data. (bool)
-    :return: The graph for the specified week and weight. (graph_tool.Graph)
+    :return: The graph for the specified interval and weight. (graph_tool.Graph)
     """
+    from graph_tool import load_graph
+    if time_interval == TimeInterval.ALL:
+        return load_graph(os.path.expanduser(f"""~/.cache/IPAnalysisTool/graphs/all/{'weighted' if weighted_edges else 'base'}/all.gt"""))
     if type(date) != datetime.date:
         try:
             from .date_util import get_date_object
             date = get_date_object(date)
         except:
             print("Invalid date format.")
-    from graph_tool import load_graph
     inputFile : str = os.path.expanduser(f'''~/.cache/IPAnalysisTool/graphs/{str(time_interval).lower()}/{'base' if not weighted_edges else 'weighted'}/{datetime.datetime.strftime(get_parent_interval(date, time_interval=time_interval)[0], "%Y-%m-%d")}.gt''')
     return load_graph(inputFile)
 

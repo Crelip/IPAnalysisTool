@@ -176,6 +176,8 @@ def generate_interval_data(start, end, rem_cur, data_folder : str, verbose : boo
          })
     data_folder = data_folder + f"/{'base' if not weighted_edges else 'weighted'}"
     if not os.path.exists(data_folder): os.makedirs(data_folder)
+    if time_interval == TimeInterval.ALL:
+        g.save(f"{data_folder}/all.gt")
     g.save(f"{data_folder}/{start}.gt")
     if verbose:
         print(f"Generated{' weighted' if weighted_edges else ''} graph for the {str(time_interval).lower()} starting with {start}.")

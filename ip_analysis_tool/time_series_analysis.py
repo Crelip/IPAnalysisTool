@@ -28,7 +28,7 @@ class TimeSeriesAnalysisEntry(TypedDict):
     k_core: np.ndarray
 
 
-def process_date(i, date, verbose=False, whole_interval=False, weighted_edges=False, time_interval : TimeInterval = TimeInterval.WEEK) -> TimeSeriesAnalysisEntry:
+def process_date(i, date, verbose=False, whole_interval=False, weighted_edges=False, time_interval : TimeInterval = TimeInterval.WEEK, max_k_core_data : int = 100) -> TimeSeriesAnalysisEntry:
     """
     Process a single date for the time series analysis.
     :param i: Index of the interval.
@@ -54,7 +54,7 @@ def process_date(i, date, verbose=False, whole_interval=False, weighted_edges=Fa
         num_vertices=None,
         num_edges=None,
         radius_ms=None,
-        k_core=np.zeros(31, dtype=int),
+        k_core=np.zeros(max_k_core_data, dtype=int),
         max_k_core=None,
         max_k_core_size=None,
         average_endpoint_distance=None,
@@ -72,7 +72,7 @@ def process_date(i, date, verbose=False, whole_interval=False, weighted_edges=Fa
             num_vertices=None,
             num_edges=None,
             radius_ms=None,
-            k_core=np.zeros(31, dtype=int),
+            k_core=np.zeros(max_k_core_data, dtype=int),
             max_k_core=None,
             max_k_core_size=None,
             average_endpoint_distance=None,
@@ -90,7 +90,7 @@ def process_date(i, date, verbose=False, whole_interval=False, weighted_edges=Fa
         edges = current_graph.num_edges()
 
         # Process k-cores
-        local_k_core_sizes = np.zeros(31, dtype=int)
+        local_k_core_sizes = np.zeros(max_k_core_data, dtype=int)
         for v in current_graph.vertices():
             k = k_core_data["k_core_decomposition"][v]
             local_k_core_sizes[k] += 1
@@ -121,7 +121,7 @@ def process_date(i, date, verbose=False, whole_interval=False, weighted_edges=Fa
             num_vertices=None,
             num_edges=None,
             radius_ms=None,
-            k_core=np.zeros(31, dtype=int),
+            k_core=np.zeros(max_k_core_data, dtype=int),
             max_k_core=None,
             max_k_core_size=None,
             average_endpoint_distance=None,
@@ -129,7 +129,7 @@ def process_date(i, date, verbose=False, whole_interval=False, weighted_edges=Fa
         )
 
 
-def time_series_analysis(verbose=False, date_range=None, max_threads=1, whole_interval = False, weighted_edges=False, time_interval : TimeInterval = TimeInterval.WEEK) -> pd.DataFrame:
+def time_series_analysis(verbose=False, date_range=None, max_threads=1, whole_interval = False, weighted_edges=False, time_interval : TimeInterval = TimeInterval.WEEK, max_k_core_data : int = 100) -> pd.DataFrame:
     from .util.date_util import iterate_range, get_date_string, get_date_object, get_cache_date_range
     import concurrent.futures
     from functools import partial
@@ -156,7 +156,7 @@ def time_series_analysis(verbose=False, date_range=None, max_threads=1, whole_in
     num_vertices = np.zeros(all_dates_count, dtype=int)
     num_edges = np.zeros(all_dates_count, dtype=int)
     radius = np.zeros(all_dates_count, dtype=float)
-    k_core_sizes = np.zeros((all_dates_count, 31), dtype=int)
+    k_core_sizes = np.zeros((all_dates_count, max_k_core_data), dtype=int)
     max_k_cores = np.zeros(all_dates_count, dtype=int)
     max_k_core_sizes = np.zeros(all_dates_count, dtype=int)
     avg_endpoint_distances = np.zeros(all_dates_count, dtype=int)
@@ -165,7 +165,7 @@ def time_series_analysis(verbose=False, date_range=None, max_threads=1, whole_in
     # Use ProcessPoolExecutor to process dates in parallel
     with concurrent.futures.ProcessPoolExecutor(max_workers=max_threads) as executor:
         # Create a partial function with some fixed parameters
-        worker = partial(process_date, verbose=verbose, whole_interval=whole_interval, weighted_edges=weighted_edges, time_interval=time_interval)
+        worker = partial(process_date, verbose=verbose, whole_interval=whole_interval, weighted_edges=weighted_edges, time_interval=time_interval, max_k_core_data=max_k_core_data)
 
         # Submit all tasks and map them to their date index
         future_to_idx = {executor.submit(worker, i, all_dates[i]): i for i in range(all_dates_count)}
@@ -217,7 +217,7 @@ def time_series_analysis(verbose=False, date_range=None, max_threads=1, whole_in
     }
 
     # Add k-core columns properly
-    for k in range(1, 31):
+    for k in range(1, max_k_core_data):
         data[f"{k}-core"] = [k_core_sizes[i][k] for i in range(all_dates_count)]
 
     return pd.DataFrame(data)
