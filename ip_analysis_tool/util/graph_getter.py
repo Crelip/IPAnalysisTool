@@ -18,7 +18,7 @@ def get_graph_by_date(date, weighted_edges = False, time_interval : TimeInterval
         except:
             print("Invalid date format.")
     from graph_tool import load_graph
-    inputFile : str = os.path.expanduser(f'''~/.cache/IPAnalysisTool/graphs/{str(time_interval).lower}/{'base' if not weighted_edges else 'weighted'}/{datetime.datetime.strftime(get_parent_interval(date, time_interval=time_interval)[0], "%Y-%m-%d")}.gt''')
+    inputFile : str = os.path.expanduser(f'''~/.cache/IPAnalysisTool/graphs/{str(time_interval).lower()}/{'base' if not weighted_edges else 'weighted'}/{datetime.datetime.strftime(get_parent_interval(date, time_interval=time_interval)[0], "%Y-%m-%d")}.gt''')
     return load_graph(inputFile)
 
 def get_all_graph_dates(weightedEdges = False, time_interval : TimeInterval = TimeInterval.WEEK) -> list:

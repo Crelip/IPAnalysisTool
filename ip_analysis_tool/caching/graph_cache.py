@@ -49,6 +49,8 @@ def generate_interval_data(start, end, rem_cur, data_folder : str, verbose : boo
     max_node_distance = g.new_vertex_property("float")
     avg_node_distance = g.new_vertex_property("float")
     node_properties = g.new_vertex_property("string")
+    g.vp["traversals"] = g.new_vertex_property("int")
+    g.vp["hop_distance"] = g.new_vertex_property("int")
 
     g.ep['traversals'] = traversals_num
     g.vp['ip'] = ip_address
@@ -101,6 +103,7 @@ def generate_interval_data(start, end, rem_cur, data_folder : str, verbose : boo
             address_to_vertex[starting_address] = starting_vertex
             vertex_to_address[starting_vertex] = starting_address
             position_in_route[starting_vertex] = 1
+        g.vp["traversals"][starting_vertex] += 1
         endpoint = route[-1].split("/")[0]
         route_length = len(route)
         for i in range(route_length - 1):
@@ -129,8 +132,14 @@ def generate_interval_data(start, end, rem_cur, data_folder : str, verbose : boo
                 # Update edge's weights if it does exist
                 else:
                     edge = existing_edges[(src_address, dest_address)]
-                    # Increment number of traversals
-                    traversals_num[edge] += 1
+
+
+                # Increment number of traversals
+                traversals_num[edge] += 1
+                g.vp["traversals"][dest_node] += 1
+                # Set the hop distance - the smallest we can find
+                if g.vp["hop_distance"][dest_node] == 0 or g.vp["hop_distance"][dest_node] < i:
+                    g.vp["hop_distance"][dest_node] = i + 1
 
                 # Add distance to node
                 node_distances[dest_node].append(times[i] / 2)
@@ -154,13 +163,16 @@ def generate_interval_data(start, end, rem_cur, data_folder : str, verbose : boo
         for e in g.edges():
             avg_edge_weight[e] = sum(edge_weights[e]) / len(edge_weights[e])
 
-    metadata = g.new_graph_property("string")
-    g.gp["metadata"] = metadata
+    # Add metadata to the graph
+    g.gp["metadata"] = g.new_graph_property("string")
     g.gp["metadata"] = dumps({
         "date": start,
         "route_dates": [get_date_string(date) for date in route_dates],
         "weighted_edges": weighted_edges,
-        "time_interval": str(time_interval).lower()
+        "time_interval": str(time_interval).lower(),
+        "overall_trips": g.vp["traversals"][starting_vertex],
+        "avg_endpoint_distance": sum([g.vp["hop_distance"][v] for v in g.vertices() if position_in_route[v] == 2]) / g.vp["traversals"][starting_vertex],
+        "avg_endpoint_distance_ms": sum([max_node_distance[v] for v in g.vertices() if position_in_route[v] == 2]) / g.vp["traversals"][starting_vertex],
          })
     data_folder = data_folder + f"/{'base' if not weighted_edges else 'weighted'}"
     if not os.path.exists(data_folder): os.makedirs(data_folder)
