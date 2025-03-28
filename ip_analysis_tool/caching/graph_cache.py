@@ -89,6 +89,7 @@ def generate_interval_data(start, end, rem_cur, data_folder : str, verbose : boo
 
     existing_edges = {}
     route_dates = SortedSet()
+    starting_vertex = None
 
     for route_index, record in enumerate(rem_cur):
         route = record[0]
@@ -170,9 +171,9 @@ def generate_interval_data(start, end, rem_cur, data_folder : str, verbose : boo
         "route_dates": [get_date_string(date) for date in route_dates],
         "weighted_edges": weighted_edges,
         "time_interval": str(time_interval).lower(),
-        "overall_trips": g.vp["traversals"][starting_vertex],
-        "avg_endpoint_distance": sum([g.vp["hop_distance"][v] for v in g.vertices() if position_in_route[v] == 2]) / g.vp["traversals"][starting_vertex],
-        "avg_endpoint_distance_ms": sum([max_node_distance[v] for v in g.vertices() if position_in_route[v] == 2]) / g.vp["traversals"][starting_vertex],
+        "overall_trips": g.vp["traversals"][starting_vertex] if starting_vertex != None else 0,
+        "avg_endpoint_distance": sum([g.vp["hop_distance"][v] for v in g.vertices() if position_in_route[v] == 2]) / g.vp["traversals"][starting_vertex] if starting_vertex != None else 0,
+        "avg_endpoint_distance_ms": sum([max_node_distance[v] for v in g.vertices() if position_in_route[v] == 2]) / g.vp["traversals"][starting_vertex] if starting_vertex != None else 0,
          })
     data_folder = data_folder + f"/{'base' if not weighted_edges else 'weighted'}"
     if not os.path.exists(data_folder): os.makedirs(data_folder)
@@ -249,7 +250,7 @@ def main(args = None):
                         help="Generates a graph only for the aforementioned time interval which includes the given date.")
     parser.add_argument("-i", "--interval", default="WEEK",
                         help="""Splits the data among time intervals.
-                        POSSIBLE VALUES: DAY, WEEK, MONTH, YEAR, ALL, default: WEEK
+                        POSSIBLE VALUES: WEEK, MONTH, YEAR, ALL, default: WEEK
                         """)
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
     parser.add_argument("-w", "--weighted_edges", action="store_true", help="Use edge weights")

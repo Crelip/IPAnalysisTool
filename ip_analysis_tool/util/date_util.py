@@ -20,9 +20,7 @@ def get_parent_year(date : datetime.date) -> Tuple[datetime.date, datetime.date]
     return first_day, last_day
 
 def get_parent_interval(date : datetime.date, time_interval : TimeInterval) -> Tuple[datetime.date, datetime.date]:
-    if time_interval == TimeInterval.DAY:
-        return date, date
-    elif time_interval == TimeInterval.WEEK:
+    if time_interval == TimeInterval.WEEK:
         return get_parent_week(date)
     elif time_interval == TimeInterval.MONTH:
         return get_parent_month(date)
