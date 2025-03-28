@@ -45,10 +45,7 @@ def iterate_weekly(start_date : datetime.date, end_date : datetime.date) -> list
 def iterate_range(start_date : datetime.date, end_date : datetime.date, time_interval : TimeInterval = TimeInterval.WEEK) -> list:
     from dateutil.relativedelta import relativedelta
     intervals = []
-    if time_interval == TimeInterval.DAY:
-        delta = relativedelta(days=1)
-        current_first, current_last = start_date, start_date
-    elif time_interval == TimeInterval.WEEK:
+    if time_interval == TimeInterval.WEEK:
         delta = relativedelta(weeks=1)
         current_first, current_last = get_parent_week(start_date)
     elif time_interval == TimeInterval.MONTH:
@@ -64,8 +61,7 @@ def iterate_range(start_date : datetime.date, end_date : datetime.date, time_int
     while current_first <= end_date:
         intervals.append((current_first, current_last))
         current_first += delta
-        if time_interval == TimeInterval.DAY: current_last = current_first
-        elif time_interval == TimeInterval.WEEK: current_first, current_last = get_parent_week(current_first)
+        if time_interval == TimeInterval.WEEK: current_first, current_last = get_parent_week(current_first)
         elif time_interval == TimeInterval.MONTH: current_first, current_last = get_parent_month(current_first)
         elif time_interval == TimeInterval.YEAR: current_first, current_last = get_parent_year(current_first)
     return intervals
