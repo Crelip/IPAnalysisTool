@@ -227,16 +227,19 @@ def generate_data(start: datetime.date, end: datetime.date, verbose: bool = Fals
         print("Created non_reserved_ip table.")
         print(f"Generating graphs by {str(time_interval).lower()}.")
 
+    from ..util.database_util import get_database_range
+    data_start, data_end = get_database_range()
     # If we don't do across all the data, we split it into intervals
     if time_interval != TimeInterval.ALL:
+        from ..util.date_util import clamp_range
+        # Clamp data range to the database range
+        start, end = clamp_range(start, end, data_start, data_end)
         intervals = iterate_range(start, end, time_interval)
         for interval in intervals:
             generate_interval_data(interval[0], interval[1] + timedelta(days=1), rem_cur, data_folder, verbose, weighted_edges, time_interval=time_interval)
     # Else if we want the data from the entire range
     else:
-        from ..util.database_util import get_database_range
-        start, end = get_database_range()
-        generate_interval_data(start, end + timedelta(days=1), rem_cur, data_folder, verbose, weighted_edges, time_interval=time_interval)
+        generate_interval_data(data_start, data_end + timedelta(days=1), rem_cur, data_folder, verbose, weighted_edges, time_interval=time_interval)
 
     rem_cur.close()
     rem_conn.close()

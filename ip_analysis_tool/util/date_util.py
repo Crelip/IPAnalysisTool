@@ -76,3 +76,6 @@ def get_cache_date_range(weighted = False, time_interval : TimeInterval = TimeIn
     first_file = files[0]
     last_file = files[-1]
     return get_date_object(first_file.split(".")[0]), get_date_object(last_file.split(".")[0])
+
+def clamp_range(start_1 : datetime.date, end_1 : datetime.date, start_2 : datetime.date, end_2 : datetime.date) -> Tuple[datetime.date, datetime.date]:
+    return max(start_1, start_2), min(end_1, end_2)
