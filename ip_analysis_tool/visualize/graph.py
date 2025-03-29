@@ -83,7 +83,6 @@ def visualize_graph_map(
                 pos=pos.t(lambda x: m(*x)),
                 edge_color=(.1, .1, .1, .1),
                 mplfig=ax,
-                vertex_size=vs,
                 vertex_fill_color=color_map if color_hops else (1, 0, 0, .5),
                    )
 
