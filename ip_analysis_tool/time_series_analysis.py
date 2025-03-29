@@ -16,11 +16,14 @@ from .enums import TimeInterval
 
 class TimeSeriesAnalysisEntry(TypedDict):
     i: int
-    network_diameter_ms: Optional[float]
-    network_diameter: Optional[int]
+    diameter_ms: Optional[float]
+    diameter: Optional[int]
+    pseudo_diameter_ms: Optional[float]
+    pseudo_diameter: Optional[int]
     num_vertices: Optional[int]
     num_edges: Optional[int]
     radius_ms: Optional[float]
+    radius: Optional[int]
     max_k_core: Optional[int]
     max_k_core_size: Optional[int]
     average_endpoint_distance_ms: Optional[float]
@@ -28,7 +31,16 @@ class TimeSeriesAnalysisEntry(TypedDict):
     k_core: np.ndarray
 
 
-def process_date(i, date, verbose=False, whole_interval=False, weighted_edges=False, time_interval : TimeInterval = TimeInterval.WEEK, max_k_core_data : int = 100) -> TimeSeriesAnalysisEntry:
+def process_date(
+        i,
+        date,
+        verbose=False,
+        whole_interval=False,
+        weighted_edges=False,
+        time_interval : TimeInterval = TimeInterval.WEEK,
+        max_k_core_data : int = 100,
+        diameter = False
+) -> TimeSeriesAnalysisEntry:
     """
     Process a single date for the time series analysis.
     :param i: Index of the interval.
@@ -49,11 +61,12 @@ def process_date(i, date, verbose=False, whole_interval=False, weighted_edges=Fa
     except KeyError:
         return TimeSeriesAnalysisEntry(
         i=i,
-        network_diameter_ms=None,
-        network_diameter=None,
+        diameter_ms=None,
+        diameter=None,
         num_vertices=None,
         num_edges=None,
         radius_ms=None,
+        radius=None,
         k_core=np.zeros(max_k_core_data, dtype=int),
         max_k_core=None,
         max_k_core_size=None,
@@ -62,28 +75,22 @@ def process_date(i, date, verbose=False, whole_interval=False, weighted_edges=Fa
         )
     k_core_data = k_core_decomposition(current_graph)
 
-    if current_graph:
-        # Check if the graph contains data from every day of the week if weekLong is True
-        if whole_interval and len(loads(current_graph.gp.metadata)["route_dates"]) < 7:
-            return TimeSeriesAnalysisEntry(
-            i=i,
-            network_diameter_ms=None,
-            network_diameter=None,
-            num_vertices=None,
-            num_edges=None,
-            radius_ms=None,
-            k_core=np.zeros(max_k_core_data, dtype=int),
-            max_k_core=None,
-            max_k_core_size=None,
-            average_endpoint_distance=None,
-            average_endpoint_distance_ms=None
-            )
-        if weighted_edges:
-            diameter = calculate_diameter(current_graph, current_graph.gp.min_weight)
+    if (current_graph and
+            (not whole_interval or len(loads(current_graph.gp.metadata)["route_dates"]) >= 7)):
+        # Calculate the diameter
+        if diameter:
+            if weighted_edges:
+                diameter = calculate_diameter(current_graph, current_graph.gp.min_weight)
+            else:
+                diameter = 0
+            diameter_vertices = calculate_diameter(current_graph)
+        # If we don't want the diameter, set it to 0
         else:
             diameter = 0
-        diameter_vertices = calculate_diameter(current_graph)
-        radius = max([current_graph.vp.min_distance[v] for v in current_graph.vertices()])
+            diameter_vertices = 0
+
+        radius_ms = max([current_graph.vp.min_distance[v] for v in current_graph.vertices()])
+        radius = max([current_graph.vp.hop_distance[v] for v in current_graph.vertices()])
 
         # Count vertices and edges
         vertices = current_graph.num_vertices()
@@ -102,34 +109,44 @@ def process_date(i, date, verbose=False, whole_interval=False, weighted_edges=Fa
 
         return TimeSeriesAnalysisEntry(
             i=i,
-            network_diameter_ms=diameter,
-           network_diameter=int(diameter_vertices),
+            diameter_ms=diameter,
+            diameter=int(diameter_vertices),
            num_vertices=vertices,
            num_edges=edges,
-           radius_ms=radius,
+           radius_ms=radius_ms,
+            radius=radius,
            k_core=local_k_core_sizes,
             max_k_core=max_k_core,
             max_k_core_size=max_k_core_size,
             average_endpoint_distance=loads(current_graph.gp.metadata)["avg_endpoint_distance"],
             average_endpoint_distance_ms=loads(current_graph.gp.metadata)["avg_endpoint_distance_ms"]
         )
-    else:
-        return TimeSeriesAnalysisEntry(
-            i=i,
-            network_diameter_ms=None,
-            network_diameter=None,
-            num_vertices=None,
-            num_edges=None,
-            radius_ms=None,
-            k_core=np.zeros(max_k_core_data, dtype=int),
-            max_k_core=None,
-            max_k_core_size=None,
-            average_endpoint_distance=None,
-            average_endpoint_distance_ms=None
-        )
+    return TimeSeriesAnalysisEntry(
+        i=i,
+        diameter_ms=None,
+        diameter=None,
+        num_vertices=None,
+        num_edges=None,
+        radius_ms=None,
+        radius=None,
+        k_core=np.zeros(max_k_core_data, dtype=int),
+        max_k_core=None,
+        max_k_core_size=None,
+        average_endpoint_distance=None,
+        average_endpoint_distance_ms=None
+    )
 
 
-def time_series_analysis(verbose=False, date_range=None, max_threads=1, whole_interval = False, weighted_edges=False, time_interval : TimeInterval = TimeInterval.WEEK, max_k_core_data : int = 100) -> pd.DataFrame:
+def time_series_analysis(
+        verbose = False,
+        date_range = None,
+        max_threads = 1,
+        whole_interval = False,
+        weighted_edges = False,
+        time_interval : TimeInterval = TimeInterval.WEEK,
+        max_k_core_data : int = 100,
+        diameter = False
+) -> pd.DataFrame:
     from .util.date_util import iterate_range, get_date_string, get_date_object, get_cache_date_range
     import concurrent.futures
     from functools import partial
@@ -155,7 +172,8 @@ def time_series_analysis(verbose=False, date_range=None, max_threads=1, whole_in
     network_diameters_in_vertices = np.zeros(all_dates_count, dtype=int)
     num_vertices = np.zeros(all_dates_count, dtype=int)
     num_edges = np.zeros(all_dates_count, dtype=int)
-    radius = np.zeros(all_dates_count, dtype=float)
+    radii_ms = np.zeros(all_dates_count, dtype=float)
+    radii = np.zeros(all_dates_count, dtype=int)
     k_core_sizes = np.zeros((all_dates_count, max_k_core_data), dtype=int)
     max_k_cores = np.zeros(all_dates_count, dtype=int)
     max_k_core_sizes = np.zeros(all_dates_count, dtype=int)
@@ -165,7 +183,7 @@ def time_series_analysis(verbose=False, date_range=None, max_threads=1, whole_in
     # Use ProcessPoolExecutor to process dates in parallel
     with concurrent.futures.ProcessPoolExecutor(max_workers=max_threads) as executor:
         # Create a partial function with some fixed parameters
-        worker = partial(process_date, verbose=verbose, whole_interval=whole_interval, weighted_edges=weighted_edges, time_interval=time_interval, max_k_core_data=max_k_core_data)
+        worker = partial(process_date, verbose=verbose, whole_interval=whole_interval, weighted_edges=weighted_edges, time_interval=time_interval, max_k_core_data=max_k_core_data, diameter=diameter)
 
         # Submit all tasks and map them to their date index
         future_to_idx = {executor.submit(worker, i, all_dates[i]): i for i in range(all_dates_count)}
@@ -175,11 +193,12 @@ def time_series_analysis(verbose=False, date_range=None, max_threads=1, whole_in
             try:
                 result = future.result()
                 i = result["i"]
-                diameter = result["network_diameter_ms"]
-                diameter_vertices = result["network_diameter"]
+                diameter = result["diameter_ms"]
+                diameter_vertices = result["diameter"]
                 vertices = result["num_vertices"]
                 edges = result["num_edges"]
-                current_radius = result["radius_ms"]
+                current_radius_ms = result["radius_ms"]
+                current_radius = result["radius"]
                 k_core = result["k_core"]
                 max_k_core = result["max_k_core"]
                 max_k_core_size = result["max_k_core_size"]
@@ -191,7 +210,8 @@ def time_series_analysis(verbose=False, date_range=None, max_threads=1, whole_in
                     network_diameters_in_vertices[i] = diameter_vertices
                     num_vertices[i] = vertices
                     num_edges[i] = edges
-                    radius[i] = current_radius
+                    radii_ms[i] = current_radius_ms
+                    radii[i] = current_radius
                     k_core_sizes[i] = k_core
                     max_k_cores[i] = max_k_core
                     max_k_core_sizes[i] = max_k_core_size
@@ -204,11 +224,12 @@ def time_series_analysis(verbose=False, date_range=None, max_threads=1, whole_in
     date_strings = [get_date_string(date) for date in all_dates]
     data = {
         "date": date_strings,
-        "network_diameter_ms": network_diameters_in_ms,
-        "network_diameter": network_diameters_in_vertices,
+        "diameter_ms": network_diameters_in_ms,
+        "diameter": network_diameters_in_vertices,
         "num_edges": num_edges,
         "num_vertices": num_vertices,
-        "radius_ms": radius,
+        "radius_ms": radii_ms,
+        "radius": radii,
         "max_k_core": max_k_cores,
         "max_k_core_size": max_k_core_sizes,
         "average_endpoint_distance": avg_endpoint_distances,
@@ -234,14 +255,14 @@ def main(args=None):
     parser.add_argument("-w", "--weighted_edges", action="store_true", help="Use graphs with weighted edges.")
     parser.add_argument("-i", "--interval", help="Choose the interval of dates to analyze. Default is WEEK", default="WEEK")
     # Parameters to measure
-    parser.add_argument("-a", "--all", action="store_true", help="Analyze all parameters")
+    parser.add_argument("-d", "--diameter", action="store_true", help="Compute the diameter for the data. Can be computationally (and space) expensive.")
     if args == None:
         args = parser.parse_args()
     else:
         args = parser.parse_args(args)
     print(args.range)
     time_interval = TimeInterval[args.interval.upper()]
-    result = time_series_analysis(args.verbose, args.range, args.threads, args.interval_long, args.weighted_edges, time_interval)
+    result = time_series_analysis(args.verbose, args.range, args.threads, args.interval_long, args.weighted_edges, time_interval, diameter=args.diameter)
     result.to_csv(args.output, index=False)
     if args.verbose:
         print(f"Data saved to {args.output}")
