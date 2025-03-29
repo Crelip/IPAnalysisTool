@@ -54,15 +54,17 @@ def visualize_graph_map(
     fig, ax = plt.subplots(1, 1, figsize=(8, 8))
     lon = g.new_vertex_property("float")
     lat = g.new_vertex_property("float")
+    vfilt = g.new_vertex_property("bool")
+    # Collect the coordinates of the vertices, if there's none, filter them out
     for v in g.vertices():
         ip = g.vp.ip[v]
-        try:
-            if ip in geo_data and geo_data[ip] is not None:
-                lon[v] = geo_data[ip]["location"]["longitude"]
-                lat[v] = geo_data[ip]["location"]["latitude"]
-        except Exception as e:
-            print(f"Error positioning vertex for IP {ip}: {e}")
-
+        if ip in geo_data and geo_data[ip] is not None:
+            lon[v] = geo_data[ip]["location"]["longitude"]
+            lat[v] = geo_data[ip]["location"]["latitude"]
+            vfilt[v] = True
+        else:
+            vfilt[v] = False
+    g.set_vertex_filter(vfilt)
     if color_hops:
         color_map = get_color_hops(g)
 
