@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from visualize import visualizeChart
+from visualize.chart import visualize_chart
 import matplotlib.pyplot as plt
 
 def linear_regression(data, keyValue="network_diameter", keyName="Network Diameter"):
