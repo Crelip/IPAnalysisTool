@@ -1,6 +1,6 @@
 from graph_tool import Graph
 from .util.calculations import get_h_index
-from .visualize import visualize_graph
+from .visualize.graph import visualize_graph_map
 
 # Get bridge of the network
 def add_bridge(g: Graph):
@@ -41,7 +41,7 @@ def h_backbone(g: Graph,
     h_backbone = GraphView(g, vfilt=vfilt, efilt=efilt)
 
     # Visualize the graph
-    if visualize: visualize_graph(h_backbone, f"{date}-h")
+    if visualize: visualize_graph_map(h_backbone, f"{date}-h")
     return {
         "date": date,
         "HBridge": h_bridge,
