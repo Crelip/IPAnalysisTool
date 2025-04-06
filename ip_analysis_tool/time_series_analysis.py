@@ -2,7 +2,6 @@
 # Key metrics:
 # number of vertices
 # number of edges
-# average degree
 # network diameter
 # K-core:
 # - individual k-core sizes
@@ -29,6 +28,7 @@ class TimeSeriesAnalysisEntry(TypedDict):
     average_endpoint_distance_ms: Optional[float]
     average_endpoint_distance: Optional[int]
     k_core: np.ndarray
+    distances: np.ndarray
 
 
 def process_date(
@@ -39,6 +39,7 @@ def process_date(
         weighted_edges=False,
         time_interval : TimeInterval = TimeInterval.WEEK,
         max_k_core_data : int = 100,
+        max_distance_data : int = 65,
         diameter = False
 ) -> TimeSeriesAnalysisEntry:
     """
@@ -68,6 +69,7 @@ def process_date(
         radius_ms=None,
         radius=None,
         k_core=np.zeros(max_k_core_data, dtype=int),
+        distances=np.zeros(max_distance_data, dtype=int),
         max_k_core=None,
         max_k_core_size=None,
         average_endpoint_distance=None,
@@ -96,11 +98,15 @@ def process_date(
         vertices = current_graph.num_vertices()
         edges = current_graph.num_edges()
 
-        # Process k-cores
+        # Process k-cores and distances
         local_k_core_sizes = np.zeros(max_k_core_data, dtype=int)
+        local_distances = np.zeros(max_distance_data, dtype=int)
         for v in current_graph.vertices():
             k = k_core_data["k_core_decomposition"][v]
             local_k_core_sizes[k] += 1
+            distance = current_graph.vp.hop_distance[v]
+            local_distances[distance] += 1
+
         max_k_core = k_core_data["max_k"]
         max_k_core_size = int(local_k_core_sizes[max_k_core])
 
@@ -116,6 +122,7 @@ def process_date(
            radius_ms=radius_ms,
             radius=radius,
            k_core=local_k_core_sizes,
+            distances=local_distances,
             max_k_core=max_k_core,
             max_k_core_size=max_k_core_size,
             average_endpoint_distance=loads(current_graph.gp.metadata)["avg_endpoint_distance"],
@@ -130,6 +137,7 @@ def process_date(
         radius_ms=None,
         radius=None,
         k_core=np.zeros(max_k_core_data, dtype=int),
+        distances=np.zeros(max_distance_data, dtype=int),
         max_k_core=None,
         max_k_core_size=None,
         average_endpoint_distance=None,
@@ -145,6 +153,7 @@ def time_series_analysis(
         weighted_edges = False,
         time_interval : TimeInterval = TimeInterval.WEEK,
         max_k_core_data : int = 100,
+        max_distance_data : int = 65,
         diameter = False
 ) -> pd.DataFrame:
     from .util.date_util import iterate_range, get_date_string, get_date_object, get_cache_date_range
@@ -175,6 +184,7 @@ def time_series_analysis(
     radii_ms = np.zeros(all_dates_count, dtype=float)
     radii = np.zeros(all_dates_count, dtype=int)
     k_core_sizes = np.zeros((all_dates_count, max_k_core_data), dtype=int)
+    distances = np.zeros((all_dates_count, max_distance_data), dtype=int)
     max_k_cores = np.zeros(all_dates_count, dtype=int)
     max_k_core_sizes = np.zeros(all_dates_count, dtype=int)
     avg_endpoint_distances = np.zeros(all_dates_count, dtype=int)
@@ -200,6 +210,7 @@ def time_series_analysis(
                 current_radius_ms = result["radius_ms"]
                 current_radius = result["radius"]
                 k_core = result["k_core"]
+                current_distances = result["distances"]
                 max_k_core = result["max_k_core"]
                 max_k_core_size = result["max_k_core_size"]
                 avg_endpoint_distance = result["average_endpoint_distance"]
@@ -213,6 +224,7 @@ def time_series_analysis(
                     radii_ms[i] = current_radius_ms
                     radii[i] = current_radius
                     k_core_sizes[i] = k_core
+                    distances[i] = current_distances
                     max_k_cores[i] = max_k_core
                     max_k_core_sizes[i] = max_k_core_size
                     avg_endpoint_distances[i] = avg_endpoint_distance
@@ -237,6 +249,9 @@ def time_series_analysis(
         "time_interval": str(time_interval),
     }
 
+    # Add distance columns properly
+    for k in range(1, max_distance_data):
+        data[f"{k}-distance"] = [distances[i][k] for i in range(all_dates_count)]
     # Add k-core columns properly
     for k in range(1, max_k_core_data):
         data[f"{k}-core"] = [k_core_sizes[i][k] for i in range(all_dates_count)]
