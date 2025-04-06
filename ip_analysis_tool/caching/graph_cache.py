@@ -1,9 +1,7 @@
 from datetime import datetime, timedelta
 import os
 from graph_tool import Graph
-from typing import Tuple
 from ..util.date_util import get_parent_interval, iterate_range, get_date_string
-from ..util.whois_util import WhoIs
 from ..util.database_util import connect_to_remote_db
 from json import dumps
 from sortedcontainers import SortedSet
@@ -17,7 +15,7 @@ def is_nondecreasing_array(arr):
     return True
 
 # Generates a graph based on all data from start date to end date
-def generate_interval_data(start, end, rem_cur, data_folder : str, verbose : bool, weighted_edges : bool = False, collect_metadata : bool = False, time_interval : TimeInterval = TimeInterval.WEEK):
+def generate_interval_data(start, end, rem_cur, data_folder : str, verbose : bool, weighted_edges : bool = False, time_interval : TimeInterval = TimeInterval.WEEK):
 
     # Adding a node to the graph
     def add_node(g, address, times, i, endpoint):
@@ -28,7 +26,6 @@ def generate_interval_data(start, end, rem_cur, data_folder : str, verbose : boo
             ip_address[node] = address
             min_node_distance[node] = times[i] / 2
             max_node_distance[node] = times[i] / 2
-            if collect_metadata: node_properties[node] = who.lookup(address)
         else:
             node = address_to_vertex[address]
             if times[i] < min_node_distance[node]: min_node_distance[node] = times[i] / 2
@@ -48,7 +45,6 @@ def generate_interval_data(start, end, rem_cur, data_folder : str, verbose : boo
     min_node_distance = g.new_vertex_property("float")
     max_node_distance = g.new_vertex_property("float")
     avg_node_distance = g.new_vertex_property("float")
-    node_properties = g.new_vertex_property("string")
     g.vp["traversals"] = g.new_vertex_property("int")
     g.vp["hop_distance"] = g.new_vertex_property("int")
 
@@ -59,7 +55,6 @@ def generate_interval_data(start, end, rem_cur, data_folder : str, verbose : boo
     g.vp['min_distance'] = min_node_distance
     g.vp['max_distance'] = max_node_distance
     g.vp['avg_distance'] = avg_node_distance
-    g.vp['properties'] = node_properties
 
     g.vp["routes"] = g.new_vertex_property("vector<int>")
     g.ep["routes"] = g.new_edge_property("vector<int>")
@@ -139,7 +134,7 @@ def generate_interval_data(start, end, rem_cur, data_folder : str, verbose : boo
                 traversals_num[edge] += 1
                 g.vp["traversals"][dest_node] += 1
                 # Set the hop distance - the smallest we can find
-                if g.vp["hop_distance"][dest_node] == 0 or g.vp["hop_distance"][dest_node] < i:
+                if g.vp["hop_distance"][dest_node] == 0 or g.vp["hop_distance"][dest_node] > i + 1:
                     g.vp["hop_distance"][dest_node] = i + 1
 
                 # Add distance to node
@@ -183,7 +178,6 @@ def generate_interval_data(start, end, rem_cur, data_folder : str, verbose : boo
     if verbose:
         print(f"Generated{' weighted' if weighted_edges else ''} graph for the {str(time_interval).lower()} starting with {start}.")
         print(f"Number of vertices: {g.num_vertices()}\nNumber of edges: {g.num_edges()}")
-    if collect_metadata: who.close()
 
 # For each time interval, generate a graph
 def generate_data(start: datetime.date, end: datetime.date, verbose: bool = False, weighted_edges : bool = False, collect_metadata : bool = False, time_interval : TimeInterval = TimeInterval.WEEK):
@@ -257,7 +251,6 @@ def main(args = None):
                         """)
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
     parser.add_argument("-w", "--weighted_edges", action="store_true", help="Use edge weights")
-    parser.add_argument("-m", "--metadata", action="store_true", help="Collect information about each IP address from WHOIS. May take a very long time.")
 
     args = parser.parse_args(args)
 
@@ -271,6 +264,6 @@ def main(args = None):
         from ..util.database_util import get_database_range
         start, end = get_database_range()
 
-    generate_data(start, end, args.verbose, args.weighted_edges, args.metadata, time_interval=time_interval)
+    generate_data(start, end, args.verbose, args.weighted_edges, time_interval=time_interval)
 
 if __name__ == "__main__": main()
