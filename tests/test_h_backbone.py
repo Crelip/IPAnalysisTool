@@ -17,9 +17,9 @@ def graphs_equal(g1, g2):
         return False
 
     # Check vertex IDs
-    ids1 = np.array([g1.vp.ids[v] for v in g1.vertices()])
-    ids2 = np.array([g2.vp.ids[v] for v in g2.vertices()])
-    if not np.array_equal(ids1, ids2):
+    ids1 = set([g1.vp.ids[v] for v in g1.vertices()])
+    ids2 = set([g2.vp.ids[v] for v in g2.vertices()])
+    if not ids1 == ids2:
         print("Vertex IDs do not match", file=sys.stderr)
         print(ids1, ids2)
         return False

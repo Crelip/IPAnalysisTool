@@ -59,7 +59,6 @@ def generate_interval_data(start, end, rem_cur, data_folder : str, verbose : boo
     g.vp["routes"] = g.new_vertex_property("vector<int>")
     g.ep["routes"] = g.new_edge_property("vector<int>")
 
-    if collect_metadata: who = WhoIs()
     address_to_vertex = {}
     vertex_to_address = {}
 

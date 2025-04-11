@@ -17,6 +17,7 @@ def disparity_compute(g : Graph):
     :param g:
     :return:
     """
+    if g.num_edges() == 0: return Graph(), {}
     alpha_measures = []
     gv = Graph(g, directed = False)
     # Scale back the weights for edges
@@ -66,39 +67,43 @@ def disparity_filter(g : Graph, percentile_threshold = 50.0):
     :param percentile_threshold:
     :return:
     """
+    if g.num_edges() == 0: return Graph()
     gv, alpha_measures = disparity_compute(g)
     edge_alpha_percentile = gv.ep.alpha_percentile
 
     # Create edge and vertex filter properties
-    edge_filter = gv.new_edge_property("bool")
+    efilt = gv.new_edge_property("bool")
     for e in gv.edges():
-        edge_filter[e] = edge_alpha_percentile[e] >= percentile_threshold
+        efilt[e] = edge_alpha_percentile[e] >= percentile_threshold
 
     # Apply the edge filter
-    gv = GraphView(g, directed = False, efilt=edge_filter)
-    print(gv.num_edges())
+    gv = GraphView(g, directed = False, efilt=efilt)
 
+    vfilt = gv.new_vertex_property("bool")
+    for v in gv.vertices():
+        vfilt[v] = v.out_degree() + v.in_degree() > 0
+
+    gv = GraphView(gv, directed = False, vfilt=vfilt)
     # Get rid of duplicite edges
-    gv = remove_reciprocal_edges(gv)
+    # gv = remove_reciprocal_edges(gv)
 
     # Remove vertices with degree less than 2 - iterate until no vertices are removed
-    prune = True
-    while prune:
-        prune = False
-        degrees = gv.degree_property_map("total")
-        vfilt = gv.new_vertex_property("bool")
-        for v in gv.vertices():
-            vfilt[v] = degrees[v] >= 2
-            # One vertex with degree < 2 is enough to trigger another iteration
-            if not vfilt[v]: prune = True
-        gv = GraphView(gv, vfilt=vfilt)
-
+    # prune = True
+    # while prune:
+    #     prune = False
+    #     degrees = gv.degree_property_map("total")
+    #     vfilt = gv.new_vertex_property("bool")
+    #     for v in gv.vertices():
+    #         vfilt[v] = degrees[v] >= 2
+    #         # One vertex with degree < 2 is enough to trigger another iteration
+    #         if not vfilt[v]: prune = True
+    #     gv = GraphView(gv, vfilt=vfilt)
     return gv
 
 def main():
     from argparse import ArgumentParser
     from ip_analysis_tool.util.graph_getter import get_graph_by_date
-    from ip_analysis_tool.visualize import visualize_graph
+    from ip_analysis_tool.visualize.graph import visualize_graph
     from ip_analysis_tool.util.date_util import get_date_object
     parser = ArgumentParser()
     parser.add_argument("-d", "--date", help="Date to process", type=str)
