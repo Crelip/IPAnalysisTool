@@ -1,25 +1,51 @@
-def visualize_chart(data, x_characteristic, y_characteristic, x_label, y_label, title):
+from pandas import DataFrame
+def visualize_chart(data: DataFrame,
+                    y_characteristic: str,
+                    title: str,
+                    x_characteristic: str = "date",
+                    x_label: str = None,
+                    y_label: str = None,
+                    ):
+    """
+    Visualize a chart with zoom functionality.
+
+    :param data: The input data as a pandas DataFrame.
+    :param y_characteristic: The column name in the DataFrame to use for the y-axis.
+    :param title: The title of the chart.
+    :param x_characteristic: The column name in the DataFrame to use for the x-axis. Defaults to "date".
+    :param x_label: The label for the x-axis. If None, it will be set to the same value as x_characteristic.
+    :param y_label: The label for the y-axis. If None, it will be set to the same value as y_characteristic.
+    :return: None
+    """
     import matplotlib.pyplot as plt
+    import matplotlib.dates as mdates
+    # Fill missing arguments
+    if x_label is None:
+        x_label = x_characteristic
+    if y_label is None:
+        y_label = y_characteristic
     # Create figure and axes
     fig, ax = plt.subplots(figsize=(10, 6))
-    ax.plot(data[x_characteristic], data[y_characteristic], marker="o", linestyle="-")
+    ax.plot(data[x_characteristic], data[y_characteristic], marker="o", linestyle="")
     ax.set_xlabel(x_label)
     ax.set_ylabel(y_label)
     ax.set_title(title)
+    ax.xaxis.set_major_locator(mdates.MonthLocator())
     plt.xticks(rotation=45)
     plt.tight_layout()
 
+    # Zoom functionality (e.g. if not using Jupyter in order to use the scroll wheel)
     def zoom_fun(event):
-        base_scale = 1.1  # adjust this value for faster/slower zooming
+        base_scale = 1.1
         cur_ylim = ax.get_ylim()
-        xdata = event.xdata  # get event x location in data coordinates
-        ydata = event.ydata  # get event y location in data coordinates
+        xdata = event.xdata
+        ydata = event.ydata
         if xdata is None or ydata is None:
             return
-        # Determine zoom direction
-        if event.button == 'up':  # scroll up to zoom in
+
+        if event.button == 'up':
             scale_factor = 1 / base_scale
-        elif event.button == 'down':  # scroll down to zoom out
+        elif event.button == 'down':
             scale_factor = base_scale
         else:
             scale_factor = 1
@@ -28,6 +54,24 @@ def visualize_chart(data, x_characteristic, y_characteristic, x_label, y_label, 
         ax.set_ylim([ydata - new_height * (1 - rely), ydata + new_height * rely])
         plt.draw()
 
-    # Connect the scroll event to the zoom function
     fig.canvas.mpl_connect('scroll_event', zoom_fun)
     plt.show()
+
+def main(args = None):
+    from argparse import ArgumentParser
+    import pandas as pd
+    parser = ArgumentParser()
+    parser.add_argument("-p", "--parameter", help="Parameter to plot")
+    parser.add_argument("-pn", "--parameter_name", help="Name of the parameter to plot (will be shown in the rendered chart)")
+    parser.add_argument("-t", "--title", help="Title of the chart")
+    parser.add_argument("-i", "--input", type=str, metavar="FILE", help="Input file containing the data to plot")
+    parser.add_argument("-s", "--skip_undefined", help="Skip undefined values", action="store_true")
+    args = parser.parse_args(args)
+    data = pd.read_csv(args.input)
+    visualize_chart(data,
+                    args.parameter,
+                    args.title,
+                    y_label=args.parameter_name)
+
+if __name__ == "__main__":
+    main()
