@@ -9,6 +9,7 @@ def get_graph_by_date(date, weighted_edges = False, time_interval : TimeInterval
     Returns the graph for the week containing the given date.
     :param date: The date to get the graph for (can be either datetime.date, or string in format YYYY-MM-DD). (datetime.date or str)
     :param weighted_edges: Whether to get the graph with weighted edges. Default is False. Graphs with weighted edges have much less data. (bool)
+    :param time_interval: Specify the time interval, for which the measurement data should be returned (ip_analysis_tool.enums.TimeInterval)
     :return: The graph for the specified interval and weight. (graph_tool.Graph)
     """
     from graph_tool import load_graph

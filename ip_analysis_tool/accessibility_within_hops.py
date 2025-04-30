@@ -8,17 +8,11 @@ from collections import defaultdict
 
 def clamp(n, smallest, largest): return max(smallest, min(n, largest))
 
-# Internal function for finding the accessibility within hops
-def internal_accessibility_within_hops(date, do_structured_output: bool = False, output_folder ="."):
-    date_stripped = date.strftime('%Y-%m-%d')
-    try:
-        g : gt.Graph = gt.load_graph(os.path.expanduser(f"~/.cache/IPAnalysisTool/graphs/week/{date_stripped}.gt"))
-    except:
-        raise FileNotFoundError("Graph file not found.")
+def accessibility_within_hops(g, do_structured_output: bool = False):
     for v in g.vertices():
-            if g.vp.position_in_route[v] == 1:
-                start_vertex = v
-                break
+        if g.vp.position_in_route[v] == 1:
+            start_vertex = v
+            break
     #BFS
     # Compute the shortest distances from the start vertex to all vertices
     distances = gt.shortest_distance(g, source=g.vertex(start_vertex))
@@ -56,39 +50,19 @@ def internal_accessibility_within_hops(date, do_structured_output: bool = False,
                 } for i in range(max_dist + 1)
             ]
         }
-        output_folder_path = os.path.abspath(os.path.expanduser(output_folder))
-        if not os.path.exists(output_folder_path):
-            os.makedirs(output_folder_path, exist_ok=True)
-        output_file = os.path.join(output_folder_path, f"{date_stripped}.json")
-        return json.dumps(output, indent=2)
-
-
-# Interface for other scripts
-def accessibility_within_hops(date: datetime.date, do_structured_output: bool = False):
-    date = get_week(date)[0]
-    date_stripped = date.strftime('%Y-%m-%d')
-    try:
-        internal_accessibility_within_hops(date, do_structured_output)
-    # If the data is not found in the cache, generate the data, then try again
-    except FileNotFoundError:
-        print("Data not found in cache. Generating data...")
-        from caching.graph_cache import generate_weekly_data
-        generate_weekly_data(date, get_week(date)[1])
-        try:
-           internal_accessibility_within_hops(date, do_structured_output)
-        except:
-            print("Data could not be generated.")
-            exit(1)
+        return output
 
 def main():
     from argparse import ArgumentParser
+    from util.date_util import get_date_object
+    from util.graph_getter import get_graph_by_date
     # Parse arguments
     parser = ArgumentParser()
     parser.add_argument("-d", "--date", help="Generates a graph for the week containing the given date.")
     parser.add_argument("-s", "--structured", action="store_true", help="Outputs the data in a structured JSON format.")
     args = parser.parse_args()
     if args.date:
-        print(accessibility_within_hops(datetime.strptime(args.date, "%Y-%m-%d").date(), args.structured))
+        print(accessibility_within_hops(get_graph_by_date(get_date_object("%Y-%m-%d")), args.structured))
     else:
         print("Please provide a date.")
         exit(1)

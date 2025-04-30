@@ -7,6 +7,12 @@ from ip_analysis_tool.util.graph_getter import get_graph_by_date
 from .util.date_util import get_date_string
 
 class KCoreDecompositionResult(TypedDict):
+    """
+    KCoreDecompositionResult is a dictionary containing the result of the k-core decomposition.
+    :param graph: The corresponding graph. (graph_tool.Graph)
+    :param k_core_decomposition: The k-core decomposition of the graph. (graph_tool.VertexPropertyMap)
+    :param max_k: The maximum k-core value. (int)
+    """
     graph: Graph
     k_core_decomposition: VertexPropertyMap
     max_k: int

@@ -1,4 +1,4 @@
-from graph_tool import Graph, VertexPropertyMap
+from graph_tool import Graph, GraphView, VertexPropertyMap
 
 def get_color_hops(g: Graph) -> VertexPropertyMap:
     """
@@ -18,7 +18,8 @@ def visualize_graph(
         g: Graph,
         name: str,
         prop: str = "ip",
-        color_hops = False
+        color_hops = False,
+        output_size: tuple = (10000, 10000),
 ):
     from graph_tool.all import graph_draw, sfdp_layout
     if color_hops:
@@ -26,24 +27,26 @@ def visualize_graph(
     graph_draw(
             g,
             sfdp_layout(g),
-            output_size=(10000,10000),
+            output_size=output_size,
             vertex_text=g.vertex_index if prop== "vertex_index" else g.vp[prop],
             vertex_font_size=8,
             vertex_size=6,
             edge_pen_width=2.0,
             bg_color=[1,1,1,1],
             vertex_fill_color=color_map if color_hops else (1, 0, 0, .5),
-            output=f"scratchpad/{name}.svg"
+            output=f"{name}"
                   )
 
 def visualize_graph_map(
         g: Graph,
-        name: str,
+        name: str = None,
         geo_data = None,
         color_hops = False,
         show = True,
-        save = True
+        save = True,
+        directed = False,
 ):
+    g = GraphView(g, directed=directed)
     from graph_tool.all import graph_draw, group_vector_property
     from mpl_toolkits.basemap import Basemap
     import matplotlib.pyplot as plt
@@ -88,11 +91,11 @@ def visualize_graph_map(
                 vertex_fill_color=color_map if color_hops else (1, 0, 0, .5),
                    )
 
-    a.fit_view()
+    #a.fit_view()
     a.set_zorder(10)
     plt.tight_layout()
     if show: plt.show()
-    if save: fig.savefig(f"scratchpad/{name}.svg", dpi=1200, bbox_inches='tight')
+    if save: fig.savefig(f"{name}", dpi=1200, bbox_inches='tight')
 
 def main(args = None):
     from argparse import ArgumentParser
