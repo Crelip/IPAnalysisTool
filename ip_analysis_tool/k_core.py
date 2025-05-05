@@ -99,6 +99,8 @@ def main(args=None):
     from json import dumps
     parser = ArgumentParser()
     parser.add_argument("-d", "--date", help="Generates data for the week containing the given date.")
+    parser.add_argument("-i", "--interval", type=str, help="Generates data for the given time interval. Can choose from: week, month, year, all")
+    parser.add_argument("-w", "--weighted_edges", action="store_true", help="Use graphs weighted edges.")
 
     # Output specifiers
     parser.add_argument("-s", "--visualize", action="store_true", help="Visualize the k-core decomposition.")
@@ -107,7 +109,7 @@ def main(args=None):
     parser.add_argument("-p", "--print", action="store_true", help="Print the k-core decomposition result (excluding the graph) on stdout.")
     parser.add_argument("-g", "--graph", type=str, metavar="FILE", help="Output the resulting graph in the form of a .gt file.")
     args = parser.parse_args(args)
-    data = k_core_decomposition(get_graph_by_date(args.date))
+    data = k_core_decomposition(get_graph_by_date(args.date, weighted_edges=args.weighted_edges, time_interval = args.interval))
     if args.visualize:
         from .visualize import visualize_graph
         visualize_graph(data["graph"], f"k-core-{get_date_string(data['date'])}")

@@ -4,7 +4,7 @@ import datetime
 from .date_util import get_parent_week, get_parent_interval
 from ..enums import TimeInterval
 
-def get_graph_by_date(date, weighted_edges = False, time_interval : TimeInterval = TimeInterval.WEEK) -> Graph:
+def get_graph_by_date(date: datetime.date = None, weighted_edges = False, time_interval : TimeInterval = TimeInterval.WEEK) -> Graph:
     """
     Returns the graph for the week containing the given date.
     :param date: The date to get the graph for (can be either datetime.date, or string in format YYYY-MM-DD). (datetime.date or str)

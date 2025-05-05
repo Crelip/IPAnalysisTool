@@ -1,71 +1,33 @@
 import pandas as pd
 import numpy as np
-from visualize.chart import visualize_chart
 import matplotlib.pyplot as plt
 
-def linear_regression(data, keyValue="network_diameter", keyName="Network Diameter"):
-    from sklearn.linear_model import LinearRegression
-    data = data.reset_index()
-    data["dateOrdinal"] = data["date"].map(pd.Timestamp.toordinal)
-    x = data[["dateOrdinal"]]
-    y = data[keyValue].values
-    model = LinearRegression()
-    model.fit(x, y)
-    last_date = data["date"].max()
-    future_dates = pd.date_range(start=last_date, periods=105, freq="W-MON")[1:]
-    future_dates_ord = future_dates.map(pd.Timestamp.toordinal).values.reshape(-1, 1)
-    predictions = model.predict(future_dates_ord)
-    # visualizeChart(data, "date", "networkDiameter", "Date", "Network Diameter", "Network Diameter Over Time")
+def linear_regression(data, key_name="network_diameter"):
+        """
+        Perform linear regression on time series data.
+        :param data: The time series data to analyze.
+        :param key_name: The column name of the data to analyze.
+        :return: DataFrame with original values, trend column and future predictions if any.
+        """
+        from sklearn.linear_model import LinearRegression
 
+        data = data[data["num_vertices"] != 0]
+        data = data.reset_index(drop=True)
+        data["date"] = pd.to_datetime(data["date"])
+        data["date_ordinal"] = data["date"].map(pd.Timestamp.toordinal)
 
-    print(predictions)
-    # Create combined visualization
-    fig, ax = plt.subplots(figsize=(12, 7))
+        x = data[["date_ordinal"]]
+        y = data[key_name].values
 
-    # Plot original data
-    ax.plot(data["date"], data[keyValue], 'o-', color='blue', label='Historical Data')
+        model = LinearRegression()
+        model.fit(x, y)
 
-    # Plot predictions
-    ax.plot(future_dates, predictions, '--', color='red', label='Predictions')
+        # add trend for historical data
+        data["trend"] = model.predict(x)
 
-    # Add shading for prediction interval (simple approach)
-    y_mean = np.mean(y)
-    y_std = np.std(y)
-    ax.fill_between(future_dates,
-                    predictions - y_std,
-                    predictions + y_std,
-                    color='red', alpha=0.2,
-                    label='Prediction Interval (±1σ)')
-
-    # Add labels and title
-    ax.set_xlabel("Date")
-    ax.set_ylabel(keyValue)
-    ax.set_title(f"{keyName}: Historical Data and Predictions")
-    ax.legend()
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-
-    # Add zoom functionality
-    def zoom_fun(event):
-        base_scale = 1.1
-        cur_ylim = ax.get_ylim()
-        xdata = event.xdata
-        ydata = event.ydata
-        if xdata is None or ydata is None:
-            return
-        if event.button == 'up':
-            scale_factor = 1 / base_scale
-        elif event.button == 'down':
-            scale_factor = base_scale
-        else:
-            scale_factor = 1
-        new_height = (cur_ylim[1] - cur_ylim[0]) * scale_factor
-        rely = (cur_ylim[1] - ydata) / (cur_ylim[1] - cur_ylim[0])
-        ax.set_ylim([ydata - new_height * (1 - rely), ydata + new_height * rely])
-        plt.draw()
-
-    fig.canvas.mpl_connect('scroll_event', zoom_fun)
-    plt.show()
+        # cleanup
+        data = data.drop(columns=["date_ordinal"])
+        return data
 
 def arima_forecast(data, predict_weeks=100, keyValue="network_diameter", keyName="Network Diameter", verbose = False):
     """
@@ -157,7 +119,32 @@ def arima_forecast(data, predict_weeks=100, keyValue="network_diameter", keyName
 
     return model_fit, forecast, future_dates
 
-# trend_identification
+def gaussian_fit(data, x_characteristic : str, y_characteristic: str = "network_diameter"):
+    """
+    Perform Gaussian fit on time series data.
+    :param data: The time series data to analyze.
+    :param y_characteristic: The column name of the data to analyze.
+    :return: DataFrame with original values and smoothed values.
+    """
+    import math
+    output = data.copy()
+
+    x = data[x_characteristic].tolist()
+    y = data[y_characteristic].tolist()
+
+    total_count = sum(y)
+    probs = [c / total_count for c in y]
+    mean = sum(d * pr for d, pr in zip(x, probs))
+    variance = sum(pr * (d - mean) ** 2 for d, pr in zip (x, probs))
+    std = math.sqrt(variance)
+    gauss = [
+        1 / (std * math.sqrt(2 * math.pi))
+        * math.exp(-0.5 * ((d - mean) / std) ** 2)
+        * total_count
+        for d in x]
+
+    output["gauss_fit"] = gauss
+    return output
 
 def trend_identification(filename, verbose=False, method="linreg", impute = False):
     data = pd.read_csv(filename)

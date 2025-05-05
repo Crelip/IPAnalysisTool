@@ -1,14 +1,11 @@
 # How much of the network is accessible within a certain number of hops
 import graph_tool.all as gt
-import datetime
-import os
-from util.week_util import get_week
-import json
 from collections import defaultdict
+from pandas import DataFrame
 
 def clamp(n, smallest, largest): return max(smallest, min(n, largest))
 
-def accessibility_within_hops(g, do_structured_output: bool = False):
+def accessibility_within_hops(g: gt.Graph, get_ip_addresses = False) -> DataFrame:
     for v in g.vertices():
         if g.vp.position_in_route[v] == 1:
             start_vertex = v
@@ -33,24 +30,22 @@ def accessibility_within_hops(g, do_structured_output: bool = False):
     ip_by_distance = defaultdict(list)
     for v in g.vertices():
         ip_by_distance[distances[v]].append(g.vp.ip[v])
-    
-    # Returning a structured JSON object
-    if do_structured_output:
-        output = {
-            "max_hops": max_dist,
-            "address_count": g.num_vertices(),
-            "distances": [
-                {
-                    "distance": i,
-                    "count": len(ip_by_distance[i]),
-                    "percentage": len(ip_by_distance[i]) / g.num_vertices() * 100,
-                    "cumulative_count": sum(len(ip_by_distance[j]) for j in range(i + 1)),
-                    "cumulative_percentage": sum(len(ip_by_distance[j]) for j in range(i + 1)) / g.num_vertices() * 100,
-                    "IPs": ip_by_distance[i]
-                } for i in range(max_dist + 1)
-            ]
+    distance_records = []
+    for i in range(max_dist + 1):
+        ips = ip_by_distance[i]
+        count = len(ips)
+        cumulative_count = sum(len(ip_by_distance[j]) for j in range(i + 1))
+        record = {
+            "distance": i,
+            "count": count,
+            "percentage": count / g.num_vertices() * 100,
+            "cumulative_count": cumulative_count,
+            "cumulative_percentage": cumulative_count / g.num_vertices() * 100
         }
-        return output
+        if get_ip_addresses:
+            record["IPs"] = ips
+        distance_records.append(record)
+    return DataFrame(distance_records)
 
 def main():
     from argparse import ArgumentParser
@@ -59,10 +54,10 @@ def main():
     # Parse arguments
     parser = ArgumentParser()
     parser.add_argument("-d", "--date", help="Generates a graph for the week containing the given date.")
-    parser.add_argument("-s", "--structured", action="store_true", help="Outputs the data in a structured JSON format.")
+    parser.add_argument("-o", "--output", help="Output file path.")
     args = parser.parse_args()
     if args.date:
-        print(accessibility_within_hops(get_graph_by_date(get_date_object("%Y-%m-%d")), args.structured))
+        print(accessibility_within_hops(get_graph_by_date(get_date_object("%Y-%m-%d"))))
     else:
         print("Please provide a date.")
         exit(1)
