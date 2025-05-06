@@ -6,24 +6,10 @@ from pandas import DataFrame
 def clamp(n, smallest, largest): return max(smallest, min(n, largest))
 
 def accessibility_within_hops(g: gt.Graph, get_ip_addresses = False) -> DataFrame:
-    for v in g.vertices():
-        if g.vp.position_in_route[v] == 1:
-            start_vertex = v
-            break
-    #BFS
-    # Compute the shortest distances from the start vertex to all vertices
-    distances = gt.shortest_distance(g, source=g.vertex(start_vertex))
-    # Debug begin
-    # for v in g.vertices():
-    #     print(g.vp.ip[v], distances[v])
-    # Debug end
-    # Convert the distances into a Python list
+    distances = g.vp["hop_distance"]
     dist_list = list(distances)
 
-    # Filter out unreachable vertices: they will typically have 'inf' distance
-    reachable_distances = [d for d in dist_list if d < float('inf')]
-
-    # Determine the maximum number of hops required to reach all reachable vertices
+    reachable_distances = [d for d in dist_list]
     max_dist = int(max(reachable_distances)) if reachable_distances else 0
 
     # Group the reachable vertices by distance

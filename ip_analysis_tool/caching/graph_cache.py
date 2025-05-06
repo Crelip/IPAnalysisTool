@@ -98,9 +98,11 @@ def generate_interval_data(start, end, rem_cur, data_folder : str, verbose : boo
             address_to_vertex[starting_address] = starting_vertex
             vertex_to_address[starting_vertex] = starting_address
             position_in_route[starting_vertex] = 1
+            g.vp["hop_distance"][starting_vertex] = 0
         g.vp["traversals"][starting_vertex] += 1
         endpoint = route[-1].split("/")[0]
         route_length = len(route)
+
         for i in range(route_length - 1):
             src, dest = route[i], route[i + 1]
 
@@ -108,14 +110,8 @@ def generate_interval_data(start, end, rem_cur, data_folder : str, verbose : boo
                 src_address = src.split("/")[0]
                 dest_address = dest.split("/")[0]
 
-                # If the source address isn't in graph yet, add it
-                if(src_address not in address_to_vertex):
-                    src_node = add_node(g, src_address, times, i - 1, endpoint)
-                    address_to_vertex[src_address] = src_node
-                # If the destination address isn't in graph yet, add it
-                if(dest_address not in address_to_vertex):
-                    dest_node = add_node(g, dest_address, times, i, endpoint)
-                    address_to_vertex[dest_address] = dest_node
+                src_node = add_node(g, src_address, times, i - 1, endpoint)
+                dest_node = add_node(g, dest_address, times, i, endpoint)
 
                 # Add edge if it doesn't exist
                 if (src_address, dest_address) not in existing_edges.keys():
@@ -133,7 +129,7 @@ def generate_interval_data(start, end, rem_cur, data_folder : str, verbose : boo
                 traversals_num[edge] += 1
                 g.vp["traversals"][dest_node] += 1
                 # Set the hop distance - the smallest we can find
-                if g.vp["hop_distance"][dest_node] == 0 or g.vp["hop_distance"][dest_node] > i + 1:
+                if (g.vp["hop_distance"][dest_node] == 0 or g.vp["hop_distance"][dest_node] > i + 1) and dest_node != starting_vertex:
                     g.vp["hop_distance"][dest_node] = i + 1
 
                 # Add distance to node
