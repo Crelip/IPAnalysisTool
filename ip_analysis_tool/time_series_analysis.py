@@ -35,7 +35,6 @@ def process_date(
         i,
         date,
         verbose=False,
-        whole_interval=False,
         weighted_edges=False,
         time_interval : TimeInterval = TimeInterval.WEEK,
         max_k_core_data : int = 100,
@@ -47,7 +46,6 @@ def process_date(
     :param i: Index of the interval.
     :param date: Date of the interval to process. It should point to the first day of the given interval.
     :param verbose: Verbose output on stdout.
-    :param whole_interval: If true, disregard the interval if there is noo data for every day of the interval.
     :param weighted_edges: Whether to use graphs with weighted edges. This will add additional data to the output, such as weighted diameter, but the accuracy is questionable given the much lower amount of the data.
     :return: A tuple containing the index of the interval, the diameter of the network, the number of vertices, the number of edges, the radius of the network, and the sizes of the k-cores.
     """
@@ -77,8 +75,7 @@ def process_date(
         )
     k_core_data = k_core_decomposition(current_graph)
 
-    if (current_graph and
-            (not whole_interval or len(loads(current_graph.gp.metadata)["route_dates"]) >= 7)):
+    if current_graph:
         # Calculate the diameter
         if diameter:
             if weighted_edges:
@@ -149,13 +146,24 @@ def time_series_analysis(
         verbose = False,
         date_range = None,
         max_threads = 1,
-        whole_interval = False,
         weighted_edges = False,
         time_interval : TimeInterval = TimeInterval.WEEK,
         max_k_core_data : int = 100,
         max_distance_data : int = 65,
         diameter = False
 ) -> pd.DataFrame:
+    """
+    Generate metrics from graph data.
+    :param verbose: Display verbose output on stdout.
+    :param date_range: A range of dates to analyze. The format is YYYY-MM-DD YYYY-MM-DD. If not specified, the whole date range will be used.
+    :param max_threads: The maximum number of threads to use for processing. Default is 1. Can be quite memory intensive.
+    :param weighted_edges:
+    :param time_interval:
+    :param max_k_core_data:
+    :param max_distance_data:
+    :param diameter:
+    :return:
+    """
     from .util.date_util import iterate_range, get_date_string, get_date_object, get_cache_date_range
     import concurrent.futures
     from functools import partial
@@ -193,7 +201,7 @@ def time_series_analysis(
     # Use ProcessPoolExecutor to process dates in parallel
     with concurrent.futures.ProcessPoolExecutor(max_workers=max_threads) as executor:
         # Create a partial function with some fixed parameters
-        worker = partial(process_date, verbose=verbose, whole_interval=whole_interval, weighted_edges=weighted_edges, time_interval=time_interval, max_k_core_data=max_k_core_data, diameter=diameter)
+        worker = partial(process_date, verbose=verbose, weighted_edges=weighted_edges, time_interval=time_interval, max_k_core_data=max_k_core_data, diameter=diameter)
 
         # Submit all tasks and map them to their date index
         future_to_idx = {executor.submit(worker, i, all_dates[i]): i for i in range(all_dates_count)}

@@ -1,7 +1,7 @@
 from math import floor
-from graph_tool import VertexPropertyMap
+from graph_tool import Graph, VertexPropertyMap
 
-def get_h_index(g, values) -> int:
+def get_h_index(g : Graph, values : VertexPropertyMap) -> int:
     n = g.num_edges()
     freq = [0] * (n + 1)
     for item in g.edges():

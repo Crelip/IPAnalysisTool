@@ -29,31 +29,6 @@ def connect_to_remote_db() -> tuple:
     rem_cur = rem_conn.cursor()
     return rem_conn, rem_cur
 
-def connect_to_local_db() -> tuple:
-    """
-    Connect to the local SQLite database
-    :return: tuple of the sqlite3 connection and cursor objects
-    """
-    import sqlite3
-    import datetime
-    from os.path import expanduser
-
-    # Define an adapter to convert datetime.date to string
-    def adapt_date(val: datetime.date) -> str:
-        return val.isoformat()
-
-    # Define a converter to convert a string back to datetime.date
-    def convert_date(val: bytes) -> datetime.date:
-        return datetime.date.fromisoformat(val.decode("utf-8"))
-
-    # Register the adapter and converter for date types
-    sqlite3.register_adapter(datetime.date, adapt_date)
-    sqlite3.register_converter("DATE", convert_date)
-
-    loc_conn = sqlite3.connect(expanduser("~/.cache/IPAnalysisTool/data.db"))
-    loc_cur = loc_conn.cursor()
-    return loc_conn, loc_cur
-
 # Gets the earliest and latest date in the database
 def get_database_range() -> Tuple[datetime.date, datetime.date]:
     # Database connection setup

@@ -1,8 +1,10 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from pandas import DataFrame
 
-def linear_regression(data, key_name="network_diameter"):
+
+def linear_regression(data: DataFrame, key_name="network_diameter"):
         """
         Perform linear regression on time series data.
         :param data: The time series data to analyze.
@@ -30,7 +32,7 @@ def linear_regression(data, key_name="network_diameter"):
         return data
 
 
-def gaussian_fit(data, x_characteristic : str, y_characteristic: str = "network_diameter"):
+def gaussian_fit(data: DataFrame, x_characteristic : str, y_characteristic: str = "network_diameter"):
     """
     Perform Gaussian fit on time series data.
     :param data: The time series data to analyze.

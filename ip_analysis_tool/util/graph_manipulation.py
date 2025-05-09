@@ -139,7 +139,7 @@ def continous_subgraph(disconnected_graph : Graph, base_graph : Graph, weight = 
 
     return remove_reciprocal_edges(final_subgraph)
 
-def mergeSubgraphs(disconnected_graph_1 : Graph, disconnected_graph_2 : Graph, base_graph : Graph) -> Graph:
+def merge_subgraphs(disconnected_graph_1 : Graph, disconnected_graph_2 : Graph, base_graph : Graph) -> Graph:
     from .graph_util import get_address_node_map
     disconnected_graph = Graph(directed = False)
     disconnected_graph.vp["ip"] = disconnected_graph.new_vertex_property("string")

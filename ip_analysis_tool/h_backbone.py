@@ -16,9 +16,13 @@ def add_bridge(g: Graph):
 
 # Get H-Backbone of the network
 def h_backbone(g: Graph,
-               visualize = False,
-               output = "json",
-               verbose = False):
+               output = "json"):
+    """
+    Get the H-Backbone of the network.
+    :param g: Input graph.
+    :param output:
+    :return:
+    """
     from graph_tool import GraphView
     from json import loads
     date = loads(g.gp.metadata)["date"]
@@ -31,17 +35,12 @@ def h_backbone(g: Graph,
     h_strength: int = get_h_index(g, h_strength_property)
     h_edges = set()
     efilt = g.new_ep("bool", vals=[False] * g.num_edges())
-    if verbose:
-        print("HBridge: ", h_bridge)
-        print("Hstrength: ", h_strength)
     for e in g.edges(): efilt[e] = ((bridge[e] >= h_bridge) or (h_strength_property[e] >= h_strength))
     vfilt = g.new_vp("bool", vals=[False] * g.num_vertices())
     for v in g.vertices():
         vfilt[v] = any([efilt[e] for e in v.all_edges()])
     h_backbone = GraphView(g, vfilt=vfilt, efilt=efilt)
 
-    # Visualize the graph
-    if visualize: visualize_graph_map(h_backbone, f"{date}-h")
     return {
         "date": date,
         "HBridge": h_bridge,

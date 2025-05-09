@@ -7,6 +7,12 @@ def edge_repr(e, ip_prop):
     return tuple(sorted([src, tgt]))
 
 def compare_graphs_jaccard(g1: gt.Graph, g2: gt.Graph):
+    """
+    Compare two graphs using the Jaccard index for edges and vertices.
+    :param g1: First graph to compare.
+    :param g2: Second graph to compare.
+    :return:
+    """
     # Apply Jaccard index for edges
     edges1 = {edge_repr(e, g1.vp.ip) for e in g1.edges()}
     edges2 = {edge_repr(e, g2.vp.ip) for e in g2.edges()}
