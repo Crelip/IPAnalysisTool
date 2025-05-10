@@ -1,4 +1,3 @@
-# Based on https://github.com/DerwenAI/disparity_filter
 from graph_tool import Graph, GraphView
 from scipy.stats import percentileofscore
 from .util.graph_manipulation import remove_reciprocal_edges
@@ -84,20 +83,6 @@ def disparity_filter(g : Graph, percentile_threshold = 50.0):
         vfilt[v] = v.out_degree() + v.in_degree() > 0
 
     gv = GraphView(gv, directed = False, vfilt=vfilt)
-    # Get rid of duplicite edges
-    # gv = remove_reciprocal_edges(gv)
-
-    # Remove vertices with degree less than 2 - iterate until no vertices are removed
-    # prune = True
-    # while prune:
-    #     prune = False
-    #     degrees = gv.degree_property_map("total")
-    #     vfilt = gv.new_vertex_property("bool")
-    #     for v in gv.vertices():
-    #         vfilt[v] = degrees[v] >= 2
-    #         # One vertex with degree < 2 is enough to trigger another iteration
-    #         if not vfilt[v]: prune = True
-    #     gv = GraphView(gv, vfilt=vfilt)
     return gv
 
 def main():

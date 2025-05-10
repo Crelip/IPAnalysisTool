@@ -15,12 +15,10 @@ def add_bridge(g: Graph):
     return g
 
 # Get H-Backbone of the network
-def h_backbone(g: Graph,
-               output = "json"):
+def h_backbone_metadata(g: Graph,):
     """
-    Get the H-Backbone of the network.
+    Get the H-Backbone metadata of the network.
     :param g: Input graph.
-    :param output:
     :return:
     """
     from graph_tool import GraphView
@@ -47,11 +45,12 @@ def h_backbone(g: Graph,
         "HStrength": h_strength,
         "edgeCount": len(h_edges),
         "count": h_backbone.num_vertices(),
-        "IPs": [g.vp.ip[v] for v in h_backbone.vertices()]
-    } if output == "json" \
-        else h_backbone \
-        if output == "graph" \
-        else None
+        "IPs": [g.vp.ip[v] for v in h_backbone.vertices()] if "ip" in g.vp else None,
+        "h_backbone": h_backbone,
+    }
+
+def h_backbone(g: Graph):
+    return h_backbone_metadata(g)["h_backbone"]
 
 def main(args = None):
     from argparse import ArgumentParser

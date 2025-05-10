@@ -175,19 +175,19 @@ def dummy_input_graph_4():
     return g
 
 def test_h_backbone_1(dummy_input_graph_1, dummy_output_graph_1):
-    result = h_backbone(dummy_input_graph_1, visualize=False, output="graph", verbose=False)
+    result = h_backbone(dummy_input_graph_1)
     assert graphs_equal(result, dummy_output_graph_1)
 
 def test_h_backbone_2(dummy_input_graph_2, dummy_output_graph_2):
-    result = h_backbone(dummy_input_graph_2, visualize=False, output="graph", verbose=False)
+    result = h_backbone(dummy_input_graph_2)
     assert graphs_equal(result, dummy_output_graph_2)
 
 def test_h_backbone_3(dummy_input_graph_3, dummy_output_graph_3):
-    result = h_backbone(dummy_input_graph_3, visualize=False, output="graph", verbose=False)
+    result = h_backbone(dummy_input_graph_3)
     assert graphs_equal(result, dummy_output_graph_3)
 
 # H-backbone of a graph with no edges should be an empty graph
 def test_h_backbone_4(dummy_input_graph_4):
-    result = h_backbone(dummy_input_graph_4, visualize=False, output="graph", verbose=False)
+    result = h_backbone(dummy_input_graph_4)
     assert result.num_vertices() == 0, "H-backbone of a graph with no edges should be an empty graph"
     assert result.num_edges() == 0, "H-backbone of a graph with no edges should be an empty graph"

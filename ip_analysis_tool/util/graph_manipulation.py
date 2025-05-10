@@ -31,8 +31,8 @@ def continous_subgraph(disconnected_graph : Graph, base_graph : Graph, weight = 
     :param base_graph: the base graph, should be connected (at least in undirected context)
     :return:
     '''
-    ipMap = map_vertices_by_property(disconnected_graph, base_graph)
-    terminals = [ipMap[v] for v in disconnected_graph.vertices()]
+    ip_map = map_vertices_by_property(disconnected_graph, base_graph)
+    terminals = [ip_map[v] for v in disconnected_graph.vertices()]
 
     if weight is None:
         weight = base_graph.new_edge_property("double")
