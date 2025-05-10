@@ -59,6 +59,33 @@ def gaussian_fit(data: DataFrame, x_characteristic : str, y_characteristic: str 
     output["gauss_fit"] = gauss
     return output
 
+def poisson_fit(data: DataFrame, x_characteristic: str, y_characteristic: str = "network_diameter"):
+    """
+    Perform Poisson approximation on time series data.
+    :param data: The DataFrame containing your series.
+    :param x_characteristic: Name of the column holding the discrete x‐values (e.g. hop distance).
+    :param y_characteristic: Name of the column holding counts at each x.
+    :return: A new DataFrame with an added 'poisson_fit' column of expected counts.
+    """
+    import math
+    output = data.copy()
+
+    x = data[x_characteristic].tolist()
+    y = data[y_characteristic].tolist()
+
+    # Total number of items and mean (λ) of the distribution
+    total_count = sum(y)
+    lambda_ = sum(d * c for d, c in zip(x, y)) / total_count
+
+    # Poisson fit: P(X = d) = e^{–λ} λ^d / d! ⇒ expected count = total_count * P(X = d)
+    poisson = [
+        total_count * math.exp(-lambda_) * (lambda_ ** d) / math.factorial(int(d))
+        for d in x
+    ]
+
+    output["poisson_fit"] = poisson
+    return output
+
 def trend_identification(filename, verbose=False, method="linreg", impute = False):
     data = pd.read_csv(filename)
     data["date"] = pd.to_datetime(data["date"])
