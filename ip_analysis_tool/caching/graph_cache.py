@@ -6,6 +6,7 @@ from ..util.database_util import connect_to_remote_db
 from json import dumps
 from sortedcontainers import SortedSet
 from ..enums import TimeInterval
+import yaml
 
 def is_nondecreasing_array(arr):
     size = len(arr)
@@ -14,22 +15,44 @@ def is_nondecreasing_array(arr):
             return False
     return True
 
+def load_starting_address():
+    """
+    Loads the starting address from the config file.
+    """
+    config_folder = os.path.expanduser("~/.config/IPAnalysisTool")
+    if not os.path.exists(config_folder):
+        os.makedirs(config_folder)
+    config = None
+    try:
+        with open(config_folder + "/config.yml", "r") as f:
+            config = yaml.safe_load(f)
+    except:
+        print("Error loading config file. Please check your login details.")
+
+    return config["starting_address"]
+
 # Generates a graph based on all data from start date to end date
 def generate_interval_data(start, end, rem_cur, data_folder : str, verbose : bool, weighted_edges : bool = False, time_interval : TimeInterval = TimeInterval.WEEK):
 
-    # Adding a node to the graph
     def add_node(g, address, times, i, endpoint):
-        if address not in address_to_vertex:
+        """
+        Adds a node to the graph if it doesn't exist, otherwise updates the node's properties.
+        """
+        if i == -1: return starting_node
+        # Check if the address is already in the graph
+        if address not in address_to_node:
             node = g.add_vertex()
-            address_to_vertex[address] = node
-            vertex_to_address[node] = address
+            address_to_node[address] = node
+            node_to_address[node] = address
             ip_address[node] = address
             min_node_distance[node] = times[i] / 2
             max_node_distance[node] = times[i] / 2
         else:
-            node = address_to_vertex[address]
+            # If the address is already in the graph, only update the node's properties
+            node = address_to_node[address]
             if times[i] < min_node_distance[node]: min_node_distance[node] = times[i] / 2
             if times[i] > max_node_distance[node]: max_node_distance[node] = times[i] / 2
+        # Add position in route
         if address == endpoint:
             position_in_route[node] = 2
         return node
@@ -38,7 +61,8 @@ def generate_interval_data(start, end, rem_cur, data_folder : str, verbose : boo
     end = datetime.strftime(end, '%Y-%m-%d')
 
     g = Graph(directed=True)
-    traversals_num = g.new_edge_property("int")
+
+    # Set up vertex properties
     ip_address = g.new_vertex_property("string")
     position_in_route = g.new_vertex_property("int") # 1 - start, 2 - end
     node_distances = g.new_vertex_property("vector<double>")
@@ -47,20 +71,21 @@ def generate_interval_data(start, end, rem_cur, data_folder : str, verbose : boo
     avg_node_distance = g.new_vertex_property("float")
     g.vp["traversals"] = g.new_vertex_property("int")
     g.vp["hop_distance"] = g.new_vertex_property("int")
-
-    g.ep['traversals'] = traversals_num
     g.vp['ip'] = ip_address
     g.vp['position_in_route'] = position_in_route
     g.vp['distances'] = node_distances
     g.vp['min_distance'] = min_node_distance
     g.vp['max_distance'] = max_node_distance
     g.vp['avg_distance'] = avg_node_distance
-
     g.vp["routes"] = g.new_vertex_property("vector<int>")
+
+    # Set up edge properties
+    traversals_num = g.new_edge_property("int")
+    g.ep['traversals'] = traversals_num
     g.ep["routes"] = g.new_edge_property("vector<int>")
 
-    address_to_vertex = {}
-    vertex_to_address = {}
+    address_to_node = {}
+    node_to_address = {}
 
     if weighted_edges:
         edge_weights = g.new_edge_property("vector<double>")
@@ -83,28 +108,23 @@ def generate_interval_data(start, end, rem_cur, data_folder : str, verbose : boo
 
     existing_edges = {}
     route_dates = SortedSet()
-    starting_vertex = None
+    starting_node = g.add_vertex()
+    starting_address = load_starting_address()
+    node_to_address[starting_node] = starting_address
+    address_to_node[starting_address] = starting_node
 
     for route_index, record in enumerate(rem_cur):
         route = record[0]
         times = record[1]
         if weighted_edges and not is_nondecreasing_array(times): continue
         date = record[2]
-        # Get the starting vertex
-        if route_index == 0:
-            starting_vertex = g.add_vertex()
-            starting_address = route[0].split("/")[0]
-            g.vp.ip[starting_vertex] = starting_address
-            address_to_vertex[starting_address] = starting_vertex
-            vertex_to_address[starting_vertex] = starting_address
-            position_in_route[starting_vertex] = 1
-            g.vp["hop_distance"][starting_vertex] = 0
-        g.vp["traversals"][starting_vertex] += 1
+        g.vp["traversals"][starting_node] += 1
         endpoint = route[-1].split("/")[0]
         route_length = len(route)
 
-        for i in range(route_length - 1):
-            src, dest = route[i], route[i + 1]
+        for i in range(route_length):
+            if i == 0: src, dest = starting_address, route[0]
+            else: src, dest = route[i - 1], route[i]
 
             if not(src == '0.0.0.0/32' or dest == '0.0.0.0/32') and src != dest:
                 src_address = src.split("/")[0]
@@ -115,7 +135,7 @@ def generate_interval_data(start, end, rem_cur, data_folder : str, verbose : boo
 
                 # Add edge if it doesn't exist
                 if (src_address, dest_address) not in existing_edges.keys():
-                    edge = g.add_edge(address_to_vertex[src_address], address_to_vertex[dest_address])
+                    edge = g.add_edge(address_to_node[src_address], address_to_node[dest_address])
                     existing_edges[(src_address, dest_address)] = edge
                     traversals_num[edge] = 1
                     if weighted_edges:
@@ -129,7 +149,7 @@ def generate_interval_data(start, end, rem_cur, data_folder : str, verbose : boo
                 traversals_num[edge] += 1
                 g.vp["traversals"][dest_node] += 1
                 # Set the hop distance - the smallest we can find
-                if (g.vp["hop_distance"][dest_node] == 0 or g.vp["hop_distance"][dest_node] > i + 1) and dest_node != starting_vertex:
+                if (g.vp["hop_distance"][dest_node] == 0 or g.vp["hop_distance"][dest_node] > i + 1) and dest_node != starting_node:
                     g.vp["hop_distance"][dest_node] = i + 1
 
                 # Add distance to node
@@ -161,9 +181,9 @@ def generate_interval_data(start, end, rem_cur, data_folder : str, verbose : boo
         "route_dates": [get_date_string(date) for date in route_dates],
         "weighted_edges": weighted_edges,
         "time_interval": str(time_interval).lower(),
-        "overall_trips": g.vp["traversals"][starting_vertex] if starting_vertex != None else 0,
-        "avg_endpoint_distance": sum([g.vp["hop_distance"][v] for v in g.vertices() if position_in_route[v] == 2]) / g.vp["traversals"][starting_vertex] if starting_vertex != None else 0,
-        "avg_endpoint_distance_ms": sum([max_node_distance[v] for v in g.vertices() if position_in_route[v] == 2]) / g.vp["traversals"][starting_vertex] if starting_vertex != None else 0,
+        "overall_trips": g.vp["traversals"][starting_node] if starting_node != None else 0,
+        "avg_endpoint_distance": (sum([g.vp["hop_distance"][v] for v in g.vertices() if position_in_route[v] == 2]) / g.vp["traversals"][starting_node]) if g.vp["traversals"][starting_node] != 0 else 0,
+        "avg_endpoint_distance_ms": (sum([max_node_distance[v] for v in g.vertices() if position_in_route[v] == 2]) / g.vp["traversals"][starting_node]) if g.vp["traversals"][starting_node] != 0 else 0,
          })
     data_folder = data_folder + f"/{'base' if not weighted_edges else 'weighted'}"
     if not os.path.exists(data_folder): os.makedirs(data_folder)

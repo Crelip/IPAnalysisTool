@@ -258,7 +258,7 @@ def time_series_analysis(
     }
 
     # Add distance columns properly
-    for k in range(1, max_distance_data):
+    for k in range(max_distance_data):
         data[f"{k}-distance"] = [distances[i][k] for i in range(all_dates_count)]
     # Add k-core columns properly
     for k in range(1, max_k_core_data):
@@ -274,7 +274,6 @@ def main(args=None):
     parser.add_argument("-o", "--output", help="Choose where to output. The output is a csv file.")
     parser.add_argument("-r", "--range", help="Choose the range of dates to analyze", nargs=2)
     parser.add_argument("-t", "--threads", type=int, default=1, help="Number of threads to use. Default is 1. Higher values may result in very high memory usage.")
-    parser.add_argument("-l", "--interval_long", action="store_true", help="Analyze only intervals, where a record exists for every day of the interval.")
     parser.add_argument("-w", "--weighted_edges", action="store_true", help="Use graphs with weighted edges.")
     parser.add_argument("-i", "--interval", help="Choose the interval of dates to analyze. Default is WEEK", default="WEEK")
     # Parameters to measure
@@ -285,7 +284,7 @@ def main(args=None):
         args = parser.parse_args(args)
     print(args.range)
     time_interval = TimeInterval[args.interval.upper()]
-    result = time_series_analysis(args.verbose, args.range, args.threads, args.interval_long, args.weighted_edges, time_interval, diameter=args.diameter)
+    result = time_series_analysis(args.verbose, args.range, args.threads, args.weighted_edges, time_interval, diameter=args.diameter)
     result.to_csv(args.output, index=False)
     if args.verbose:
         print(f"Data saved to {args.output}")
