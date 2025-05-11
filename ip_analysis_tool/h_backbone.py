@@ -15,7 +15,7 @@ def add_bridge(g: Graph):
     return g
 
 # Get H-Backbone of the network
-def h_backbone_metadata(g: Graph,):
+def h_backbone_metadata(g: Graph):
     """
     Get the H-Backbone metadata of the network.
     :param g: Input graph.
