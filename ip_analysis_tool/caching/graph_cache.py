@@ -17,7 +17,7 @@ def is_nondecreasing_array(arr):
 
 def load_starting_address():
     """
-    Loads the starting address from the config file.
+    Loads the starting address from the config file. If the starting address isn't defined, 'localhost' is returned.
     """
     config_folder = os.path.expanduser("~/.config/IPAnalysisTool")
     if not os.path.exists(config_folder):
@@ -28,8 +28,9 @@ def load_starting_address():
             config = yaml.safe_load(f)
     except:
         print("Error loading config file. Please check your login details.")
+        return "localhost"
 
-    return config["starting_address"]
+    return config["starting_address"] if config["starting_address"] else "localhost"
 
 # Generates a graph based on all data from start date to end date
 def generate_interval_data(start, end, rem_cur, data_folder : str, verbose : bool, weighted_edges : bool = False, time_interval : TimeInterval = TimeInterval.WEEK):
@@ -47,9 +48,11 @@ def generate_interval_data(start, end, rem_cur, data_folder : str, verbose : boo
             ip_address[node] = address
             min_node_distance[node] = times[i] / 2
             max_node_distance[node] = times[i] / 2
+            avg_node_distance[node] = times[i] / 2
         else:
             # If the address is already in the graph, only update the node's properties
             node = address_to_node[address]
+            avg_node_distance[node] = (avg_node_distance[node] + float(times[i] / 2)) / 2
             if times[i] < min_node_distance[node]: min_node_distance[node] = times[i] / 2
             if times[i] > max_node_distance[node]: max_node_distance[node] = times[i] / 2
         # Add position in route

@@ -2,13 +2,14 @@
 import pandas as pd
 import numpy as np
 
-def remove_empty_dates(data):
+def remove_empty_dates(data, key_column = "num_edges"):
     """
     Removes dates from the data that have no data.
     :param data: Data to filter
+    :param key_column: Column to filter on based on where the value is 0. Default is num_edges.
     :return: Filtered data
     """
-    return data[data["num_vertices"] != 0]
+    return data[data[key_column] != 0]
 
 def z_score_filter(data, key=None, threshold=3):
     """
