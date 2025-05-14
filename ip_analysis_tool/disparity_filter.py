@@ -2,23 +2,28 @@ from graph_tool import Graph, GraphView
 from scipy.stats import percentileofscore
 from .util.graph_manipulation import remove_reciprocal_edges
 
+
 def disparity_integral(x, k):
     assert x != 1.0, "x cannot be 1.0"
     assert k != 1.0, "k cannot be 1.0"
     return ((1.0 - x) ** k) / ((k - 1.0) * (x - 1.0))
 
-def get_disparity_significance(norm_weight, degree):
-    return 1.0 - ((degree - 1.0) * (disparity_integral(norm_weight, degree) - disparity_integral(0.0, degree)))
 
-def disparity_compute(g : Graph):
+def get_disparity_significance(norm_weight, degree):
+    return 1.0 - ((degree - 1.0) * (disparity_integral(norm_weight,
+                  degree) - disparity_integral(0.0, degree)))
+
+
+def disparity_compute(g: Graph):
     """
     Compute the disparity measures of a graph.
     :param g:
     :return:
     """
-    if g.num_edges() == 0: return Graph(), {}
+    if g.num_edges() == 0:
+        return Graph(), {}
     alpha_measures = []
-    gv = Graph(g, directed = False)
+    gv = Graph(g, directed=False)
     # Scale back the weights for edges
     max_weight = max([g.ep.traversals[e] for e in gv.edges()])
     weight_prop = gv.new_edge_property("float")
@@ -53,20 +58,23 @@ def disparity_compute(g : Graph):
                 edge_alpha[e] = 0.0
 
     for e in gv.edges():
-        edge_alpha_percentile[e] = percentileofscore(alpha_measures, edge_alpha[e])
+        edge_alpha_percentile[e] = percentileofscore(
+            alpha_measures, edge_alpha[e])
 
     gv.edge_properties["alpha"] = edge_alpha
     gv.edge_properties["alpha_percentile"] = edge_alpha_percentile
     return gv, alpha_measures
 
-def disparity_filter(g : Graph, percentile_threshold = 50.0):
+
+def disparity_filter(g: Graph, percentile_threshold=50.0):
     """
     Filter a graph based on the disparity filter.
     :param g: Input graph.
     :param percentile_threshold:
     :return:
     """
-    if g.num_edges() == 0: return Graph()
+    if g.num_edges() == 0:
+        return Graph()
     gv, alpha_measures = disparity_compute(g)
     edge_alpha_percentile = gv.ep.alpha_percentile
 
@@ -76,14 +84,15 @@ def disparity_filter(g : Graph, percentile_threshold = 50.0):
         efilt[e] = edge_alpha_percentile[e] >= percentile_threshold
 
     # Apply the edge filter
-    gv = GraphView(g, directed = False, efilt=efilt)
+    gv = GraphView(g, directed=False, efilt=efilt)
 
     vfilt = gv.new_vertex_property("bool")
     for v in gv.vertices():
         vfilt[v] = v.out_degree() + v.in_degree() > 0
 
-    gv = GraphView(gv, directed = False, vfilt=vfilt)
+    gv = GraphView(gv, directed=False, vfilt=vfilt)
     return gv
+
 
 def main():
     from argparse import ArgumentParser
@@ -92,12 +101,27 @@ def main():
     from ip_analysis_tool.util.date_util import get_date_object
     parser = ArgumentParser()
     parser.add_argument("-d", "--date", help="Date to process", type=str)
-    parser.add_argument("-p", "--percentile", help="Percentile threshold", type=float, default=50.0)
-    parser.add_argument("-w", "--weighted_edges", help="Use graphs with weighted edges.", action="store_true")
+    parser.add_argument(
+        "-p",
+        "--percentile",
+        help="Percentile threshold",
+        type=float,
+        default=50.0)
+    parser.add_argument(
+        "-w",
+        "--weighted_edges",
+        help="Use graphs with weighted edges.",
+        action="store_true")
     args = parser.parse_args()
-    g = disparity_filter(get_graph_by_date(get_date_object(args.date), weighted_edges=args.weighted_edges), args.percentile)
+    g = disparity_filter(
+        get_graph_by_date(
+            get_date_object(
+                args.date),
+            weighted_edges=args.weighted_edges),
+        args.percentile)
     print(g.num_vertices())
     visualize_graph(g, f"disparity_{args.date}")
+
 
 if __name__ == "__main__":
     main()

@@ -2,7 +2,8 @@
 import pandas as pd
 import numpy as np
 
-def remove_empty_dates(data, key_column = "num_edges"):
+
+def remove_empty_dates(data, key_column="num_edges"):
     """
     Removes dates from the data that have no data.
     :param data: Data to filter
@@ -10,6 +11,7 @@ def remove_empty_dates(data, key_column = "num_edges"):
     :return: Filtered data
     """
     return data[data[key_column] != 0]
+
 
 def z_score_filter(data, key=None, threshold=3):
     """
@@ -23,6 +25,7 @@ def z_score_filter(data, key=None, threshold=3):
     data["zscore"] = zscore(data[key])
     return data[np.abs(data["zscore"]) < threshold]
 
+
 def iqr_filter(data, key=None, threshold=1.5):
     """
     Filters out outliers from the data using the IQR method.
@@ -34,7 +37,9 @@ def iqr_filter(data, key=None, threshold=1.5):
     q1 = data[key].quantile(0.25)
     q3 = data[key].quantile(0.75)
     iqr = q3 - q1
-    return data[(data[key] >= q1 - threshold * iqr) & (data[key] <= q3 + threshold * iqr)]
+    return data[(data[key] >= q1 - threshold * iqr) &
+                (data[key] <= q3 + threshold * iqr)]
+
 
 def main():
     from argparse import ArgumentParser
@@ -43,7 +48,11 @@ def main():
     parser.add_argument("-k", "--key", help="Column to filter on")
     parser.add_argument("-m", "--method", help="Method to use for filtering")
     parser.add_argument("-o", "--output", help="Output file")
-    parser.add_argument("-t", "--threshold", type=int, help="Threshold for filtering outliers")
+    parser.add_argument(
+        "-t",
+        "--threshold",
+        type=int,
+        help="Threshold for filtering outliers")
     args = parser.parse_args()
     data = pd.read_csv(args.filename)
     filtered = pd.DataFrame()
@@ -52,6 +61,7 @@ def main():
     elif args.method == "iqr":
         filtered = iqr_filter(data, args.key, args.threshold)
     filtered.to_csv(args.output, index=False)
+
 
 if __name__ == "__main__":
     main()

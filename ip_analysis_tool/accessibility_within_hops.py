@@ -3,9 +3,12 @@ import graph_tool.all as gt
 from collections import defaultdict
 from pandas import DataFrame
 
+
 def clamp(n, smallest, largest): return max(smallest, min(n, largest))
 
-def accessibility_within_hops(g: gt.Graph, get_ip_addresses = False) -> DataFrame:
+
+def accessibility_within_hops(g: gt.Graph,
+                              get_ip_addresses=False) -> DataFrame:
     """
     Calculate the accessibility within hops for a given graph.
     :param g: The graph to analyze.
@@ -38,7 +41,10 @@ def accessibility_within_hops(g: gt.Graph, get_ip_addresses = False) -> DataFram
         distance_records.append(record)
     return DataFrame(distance_records)
 
-def accessibility_within_hops_approx(g: gt.Graph, get_ip_addresses = False) -> DataFrame:
+
+def accessibility_within_hops_approx(
+        g: gt.Graph,
+        get_ip_addresses=False) -> DataFrame:
     """
     Calculate the accessibility within hops for a given graph. This is an approximation of the actual distances where it's simply collecting the recorded distances from the data, therefore it's faster, but sometimes less accurate.
     :param g: The graph to analyze.
@@ -71,20 +77,28 @@ def accessibility_within_hops_approx(g: gt.Graph, get_ip_addresses = False) -> D
         distance_records.append(record)
     return DataFrame(distance_records)
 
+
 def main():
     from argparse import ArgumentParser
     from util.date_util import get_date_object
     from util.graph_getter import get_graph_by_date
     # Parse arguments
     parser = ArgumentParser()
-    parser.add_argument("-d", "--date", help="Generates a graph for the week containing the given date.")
+    parser.add_argument(
+        "-d",
+        "--date",
+        help="Generates a graph for the week containing the given date.")
     parser.add_argument("-o", "--output", help="Output file path.")
     args = parser.parse_args()
     if args.date:
-        print(accessibility_within_hops(get_graph_by_date(get_date_object("%Y-%m-%d"))))
+        print(
+            accessibility_within_hops(
+                get_graph_by_date(
+                    get_date_object("%Y-%m-%d"))))
     else:
         print("Please provide a date.")
         exit(1)
+
 
 if __name__ == "__main__":
     main()

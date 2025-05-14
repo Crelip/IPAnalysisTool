@@ -12,7 +12,6 @@ from typing import TypedDict, Optional
 from .enums import TimeInterval
 
 
-
 class TimeSeriesAnalysisEntry(TypedDict):
     i: int
     diameter_ms: Optional[float]
@@ -36,10 +35,10 @@ def process_date(
         date,
         verbose=False,
         weighted_edges=False,
-        time_interval : TimeInterval = TimeInterval.WEEK,
-        max_k_core_data : int = 100,
-        max_distance_data : int = 65,
-        diameter = False
+        time_interval: TimeInterval = TimeInterval.WEEK,
+        max_k_core_data: int = 100,
+        max_distance_data: int = 65,
+        diameter=False
 ) -> TimeSeriesAnalysisEntry:
     """
     Process a single date for the time series analysis.
@@ -56,22 +55,25 @@ def process_date(
     from json import loads
 
     try:
-        current_graph = get_graph_by_date(date, weighted_edges=weighted_edges, time_interval=time_interval)
+        current_graph = get_graph_by_date(
+            date,
+            weighted_edges=weighted_edges,
+            time_interval=time_interval)
     except KeyError:
         return TimeSeriesAnalysisEntry(
-        i=i,
-        diameter_ms=None,
-        diameter=None,
-        num_vertices=None,
-        num_edges=None,
-        radius_ms=None,
-        radius=None,
-        k_core=np.zeros(max_k_core_data, dtype=int),
-        distances=np.zeros(max_distance_data, dtype=int),
-        max_k_core=None,
-        max_k_core_size=None,
-        average_endpoint_distance=None,
-        average_endpoint_distance_ms=None
+            i=i,
+            diameter_ms=None,
+            diameter=None,
+            num_vertices=None,
+            num_edges=None,
+            radius_ms=None,
+            radius=None,
+            k_core=np.zeros(max_k_core_data, dtype=int),
+            distances=np.zeros(max_distance_data, dtype=int),
+            max_k_core=None,
+            max_k_core_size=None,
+            average_endpoint_distance=None,
+            average_endpoint_distance_ms=None
         )
     k_core_data = k_core_decomposition(current_graph)
 
@@ -79,7 +81,8 @@ def process_date(
         # Calculate the diameter
         if diameter:
             if weighted_edges:
-                diameter = calculate_diameter(current_graph, current_graph.gp.min_weight)
+                diameter = calculate_diameter(
+                    current_graph, current_graph.gp.min_weight)
             else:
                 diameter = 0
             diameter_vertices = calculate_diameter(current_graph)
@@ -88,8 +91,10 @@ def process_date(
             diameter = 0
             diameter_vertices = 0
 
-        radius_ms = max([current_graph.vp.min_distance[v] for v in current_graph.vertices()])
-        radius = max([current_graph.vp.hop_distance[v] for v in current_graph.vertices()])
+        radius_ms = max([current_graph.vp.min_distance[v]
+                        for v in current_graph.vertices()])
+        radius = max([current_graph.vp.hop_distance[v]
+                     for v in current_graph.vertices()])
 
         # Count vertices and edges
         vertices = current_graph.num_vertices()
@@ -114,17 +119,18 @@ def process_date(
             i=i,
             diameter_ms=diameter,
             diameter=int(diameter_vertices),
-           num_vertices=vertices,
-           num_edges=edges,
-           radius_ms=radius_ms,
+            num_vertices=vertices,
+            num_edges=edges,
+            radius_ms=radius_ms,
             radius=radius,
-           k_core=local_k_core_sizes,
+            k_core=local_k_core_sizes,
             distances=local_distances,
             max_k_core=max_k_core,
             max_k_core_size=max_k_core_size,
-            average_endpoint_distance=loads(current_graph.gp.metadata)["avg_endpoint_distance"],
-            average_endpoint_distance_ms=loads(current_graph.gp.metadata)["avg_endpoint_distance_ms"]
-        )
+            average_endpoint_distance=loads(
+                current_graph.gp.metadata)["avg_endpoint_distance"],
+            average_endpoint_distance_ms=loads(
+                current_graph.gp.metadata)["avg_endpoint_distance_ms"])
     return TimeSeriesAnalysisEntry(
         i=i,
         diameter_ms=None,
@@ -143,14 +149,14 @@ def process_date(
 
 
 def time_series_analysis(
-        verbose = False,
-        date_range = None,
-        max_threads = 1,
-        weighted_edges = False,
-        time_interval : TimeInterval = TimeInterval.WEEK,
-        max_k_core_data : int = 100,
-        max_distance_data : int = 65,
-        diameter = False
+        verbose=False,
+        date_range=None,
+        max_threads=1,
+        weighted_edges=False,
+        time_interval: TimeInterval = TimeInterval.WEEK,
+        max_k_core_data: int = 100,
+        max_distance_data: int = 65,
+        diameter=False
 ) -> pd.DataFrame:
     """
     Generate metrics from graph data.
@@ -169,7 +175,10 @@ def time_series_analysis(
     from functools import partial
 
     graph_date_range = get_cache_date_range()
-    dates = [date[0] for date in iterate_range(graph_date_range[0], graph_date_range[1])]
+    dates = [
+        date[0] for date in iterate_range(
+            graph_date_range[0],
+            graph_date_range[1])]
     if date_range:
         date_range = [get_date_object(date) for date in date_range]
         earliest_date = max(min(dates), date_range[0])
@@ -180,9 +189,14 @@ def time_series_analysis(
     if earliest_date > latest_date:
         return None
 
-    all_dates = [date[0] for date in iterate_range(earliest_date, latest_date, time_interval)]
+    all_dates = [
+        date[0] for date in iterate_range(
+            earliest_date,
+            latest_date,
+            time_interval)]
     all_dates_count = len(all_dates)
-    if verbose: print(f"Processing {all_dates_count} dates")
+    if verbose:
+        print(f"Processing {all_dates_count} dates")
 
     # Initialize data arrays
     network_diameters_in_ms = np.zeros(all_dates_count, dtype=float)
@@ -201,10 +215,20 @@ def time_series_analysis(
     # Use ProcessPoolExecutor to process dates in parallel
     with concurrent.futures.ProcessPoolExecutor(max_workers=max_threads) as executor:
         # Create a partial function with some fixed parameters
-        worker = partial(process_date, verbose=verbose, weighted_edges=weighted_edges, time_interval=time_interval, max_k_core_data=max_k_core_data, diameter=diameter)
+        worker = partial(
+            process_date,
+            verbose=verbose,
+            weighted_edges=weighted_edges,
+            time_interval=time_interval,
+            max_k_core_data=max_k_core_data,
+            diameter=diameter)
 
         # Submit all tasks and map them to their date index
-        future_to_idx = {executor.submit(worker, i, all_dates[i]): i for i in range(all_dates_count)}
+        future_to_idx = {
+            executor.submit(
+                worker,
+                i,
+                all_dates[i]): i for i in range(all_dates_count)}
 
         # Process results as they complete
         for future in concurrent.futures.as_completed(future_to_idx):
@@ -259,10 +283,12 @@ def time_series_analysis(
 
     # Add distance columns properly
     for k in range(max_distance_data):
-        data[f"{k}-distance"] = [distances[i][k] for i in range(all_dates_count)]
+        data[f"{k}-distance"] = [distances[i][k]
+                                 for i in range(all_dates_count)]
     # Add k-core columns properly
     for k in range(1, max_k_core_data):
-        data[f"{k}-core"] = [k_core_sizes[i][k] for i in range(all_dates_count)]
+        data[f"{k}-core"] = [k_core_sizes[i][k]
+                             for i in range(all_dates_count)]
 
     return pd.DataFrame(data)
 
@@ -270,21 +296,55 @@ def time_series_analysis(
 def main(args=None):
     from argparse import ArgumentParser
     parser = ArgumentParser()
-    parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
-    parser.add_argument("-o", "--output", help="Choose where to output. The output is a csv file.")
-    parser.add_argument("-r", "--range", help="Choose the range of dates to analyze", nargs=2)
-    parser.add_argument("-t", "--threads", type=int, default=1, help="Number of threads to use. Default is 1. Higher values may result in very high memory usage.")
-    parser.add_argument("-w", "--weighted_edges", action="store_true", help="Use graphs with weighted edges.")
-    parser.add_argument("-i", "--interval", help="Choose the interval of dates to analyze. Default is WEEK", default="WEEK")
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Verbose output")
+    parser.add_argument(
+        "-o",
+        "--output",
+        help="Choose where to output. The output is a csv file.")
+    parser.add_argument(
+        "-r",
+        "--range",
+        help="Choose the range of dates to analyze",
+        nargs=2)
+    parser.add_argument(
+        "-t",
+        "--threads",
+        type=int,
+        default=1,
+        help="Number of threads to use. Default is 1. Higher values may result in very high memory usage.")
+    parser.add_argument(
+        "-w",
+        "--weighted_edges",
+        action="store_true",
+        help="Use graphs with weighted edges.")
+    parser.add_argument(
+        "-i",
+        "--interval",
+        help="Choose the interval of dates to analyze. Default is WEEK",
+        default="WEEK")
     # Parameters to measure
-    parser.add_argument("-d", "--diameter", action="store_true", help="Compute the diameter for the data. Can be computationally (and space) expensive.")
-    if args == None:
+    parser.add_argument(
+        "-d",
+        "--diameter",
+        action="store_true",
+        help="Compute the diameter for the data. Can be computationally (and space) expensive.")
+    if args is None:
         args = parser.parse_args()
     else:
         args = parser.parse_args(args)
     print(args.range)
     time_interval = TimeInterval[args.interval.upper()]
-    result = time_series_analysis(args.verbose, args.range, args.threads, args.weighted_edges, time_interval, diameter=args.diameter)
+    result = time_series_analysis(
+        args.verbose,
+        args.range,
+        args.threads,
+        args.weighted_edges,
+        time_interval,
+        diameter=args.diameter)
     result.to_csv(args.output, index=False)
     if args.verbose:
         print(f"Data saved to {args.output}")

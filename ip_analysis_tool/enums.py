@@ -1,4 +1,6 @@
 from enum import Enum
+
+
 class TimeInterval(Enum):
     WEEK = 2
     MONTH = 3

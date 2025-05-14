@@ -2,7 +2,11 @@ import pandas as pd
 import numpy as np
 from pandas import DataFrame
 
-def linear_regression(data: DataFrame, x_characteristic: str, y_characteristic: str):
+
+def linear_regression(
+        data: DataFrame,
+        x_characteristic: str,
+        y_characteristic: str):
     """
     Perform linear regression on time series data.
     :param data: The time series data to analyze.
@@ -34,7 +38,10 @@ def linear_regression(data: DataFrame, x_characteristic: str, y_characteristic: 
     return data
 
 
-def gaussian_fit(data: DataFrame, x_characteristic : str, y_characteristic: str):
+def gaussian_fit(
+        data: DataFrame,
+        x_characteristic: str,
+        y_characteristic: str):
     """
     Perform Gaussian fit on time series data.
     :param data: The time series data to analyze.
@@ -50,7 +57,7 @@ def gaussian_fit(data: DataFrame, x_characteristic : str, y_characteristic: str)
     total_count = sum(y)
     probs = [c / total_count for c in y]
     mean = sum(d * pr for d, pr in zip(x, probs))
-    variance = sum(pr * (d - mean) ** 2 for d, pr in zip (x, probs))
+    variance = sum(pr * (d - mean) ** 2 for d, pr in zip(x, probs))
     std = math.sqrt(variance)
     gauss = [
         1 / (std * math.sqrt(2 * math.pi))
@@ -60,6 +67,7 @@ def gaussian_fit(data: DataFrame, x_characteristic : str, y_characteristic: str)
 
     output["fit"] = gauss
     return output
+
 
 def poisson_fit(data: DataFrame, x_characteristic: str, y_characteristic: str):
     """
@@ -88,6 +96,7 @@ def poisson_fit(data: DataFrame, x_characteristic: str, y_characteristic: str):
     output["fit"] = poisson
     return output
 
+
 methods_map = {
     "linreg": {
         "name": "Linear Regression",
@@ -103,7 +112,13 @@ methods_map = {
     },
 }
 
-def trend_identification(filename : str, y_characteristic : str, x_characteristic : str = None, method : str = "linreg", impute : bool = False):
+
+def trend_identification(
+        filename: str,
+        y_characteristic: str,
+        x_characteristic: str = None,
+        method: str = "linreg",
+        impute: bool = False):
     data = pd.read_csv(filename)
     data["date"] = pd.to_datetime(data["date"])
     # Clean/impute missing weeks
@@ -114,7 +129,8 @@ def trend_identification(filename : str, y_characteristic : str, x_characteristi
         data.loc[zero_rows, :] = np.nan
         # Forward fill to impute missing values
         data.ffill(inplace=True)
-    else: data = data[data['numVertices'] != 0].copy()
+    else:
+        data = data[data['numVertices'] != 0].copy()
 
     entry = methods_map.get(method)
     if entry is None:
@@ -130,31 +146,65 @@ def trend_identification(filename : str, y_characteristic : str, x_characteristi
 def main():
     from argparse import ArgumentParser
     parser = ArgumentParser()
-    parser.add_argument("-f", "--filename", help="Generates data from the file containing the given filename.")
-    parser.add_argument("-v", "--verbose", help="Verbose output.", action="store_true")
-    parser.add_argument("-m", "--method", help="Method to use to identify trends")
-    parser.add_argument("-i", "--impute", help="Impute gaps", action="store_true")
-    parser.add_argument("-p", "--plot", help="Plot trends", action="store_true")
-    parser.add_argument("-x", "--x_characteristic", help="X characteristic to use for trend identification")
-    parser.add_argument("-y", "--y_characteristic", help="Y characteristic to use for trend identification")
+    parser.add_argument(
+        "-f",
+        "--filename",
+        help="Generates data from the file containing the given filename.")
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        help="Verbose output.",
+        action="store_true")
+    parser.add_argument(
+        "-m",
+        "--method",
+        help="Method to use to identify trends")
+    parser.add_argument(
+        "-i",
+        "--impute",
+        help="Impute gaps",
+        action="store_true")
+    parser.add_argument(
+        "-p",
+        "--plot",
+        help="Plot trends",
+        action="store_true")
+    parser.add_argument(
+        "-x",
+        "--x_characteristic",
+        help="X characteristic to use for trend identification")
+    parser.add_argument(
+        "-y",
+        "--y_characteristic",
+        help="Y characteristic to use for trend identification")
     parser.add_argument("-t", "--title", help="Title of the plot")
     parser.add_argument("-o", "--output", help="Output filename")
-    parser.add_argument("-s", "--save", help="Save the output to a file", action="store_true")
+    parser.add_argument(
+        "-s",
+        "--save",
+        help="Save the output to a file",
+        action="store_true")
     parser.add_argument()
     args = parser.parse_args()
-    data = trend_identification(args.filename, args.y_characteristic, args.x_characteristic, args.method, args.impute)
+    data = trend_identification(
+        args.filename,
+        args.y_characteristic,
+        args.x_characteristic,
+        args.method,
+        args.impute)
 
     if args.plot():
         from ip_analysis_tool.visualize.chart import visualize_chart_add_line
         visualize_chart_add_line(
-            data = data,
-            x_characteristic = args.x_characteristic,
-            y_characteristic = args.y_characteristic,
-            trend_characteristic = "fit",
-            title = args.title,
-            filename = args.output if args.output else "",
-             show = True,
-             save = args.save)
+            data=data,
+            x_characteristic=args.x_characteristic,
+            y_characteristic=args.y_characteristic,
+            trend_characteristic="fit",
+            title=args.title,
+            filename=args.output if args.output else "",
+            show=True,
+            save=args.save)
+
 
 if __name__ == "__main__":
     main()

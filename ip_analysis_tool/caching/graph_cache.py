@@ -198,13 +198,24 @@ def generate_interval_data(start, end, rem_cur, data_folder : str, verbose : boo
         print(f"Number of vertices: {g.num_vertices()}\nNumber of edges: {g.num_edges()}")
 
 # For each time interval, generate a graph
-def generate_data(start: datetime.date, end: datetime.date, verbose: bool = False, weighted_edges : bool = False, collect_metadata : bool = False, time_interval : TimeInterval = TimeInterval.WEEK):
+def generate_data(start: datetime.date, end: datetime.date, verbose: bool = False, weighted_edges : bool = False, time_interval : TimeInterval = TimeInterval.WEEK):
+    """
+    Generates graphs from database data.
+    :param start: Date, from which to start graph generation.
+    :param end: Date, at which to end graph generation.
+    :param verbose: Verbose output.
+    :param weighted_edges: Generate a graph with weighted edges, usually results in a much smaller graph.
+    :param time_interval: Interval to split the data into.
+    :return:
+    """
     # Database connection setup
     rem_conn, rem_cur = connect_to_remote_db()
 
     data_folder : str = os.path.expanduser(f"~/.cache/IPAnalysisTool/graphs/{str(time_interval).lower()}")
     if not os.path.exists(data_folder):
         os.makedirs(data_folder)
+    
+    if verbose: print("Connected to the database, gathering a list of non-reserved IP addresses.")
 
     # Create a table of non-reserved IP addresses
     rem_cur.execute("""CREATE TEMPORARY TABLE non_reserved_ip AS
@@ -236,7 +247,7 @@ def generate_data(start: datetime.date, end: datetime.date, verbose: bool = Fals
                     )"""
                    )
     if verbose:
-        print("Created non_reserved_ip table.")
+        print("Created non-reserved ip list.")
         print(f"Generating graphs by {str(time_interval).lower()}.")
 
     from ..util.database_util import get_database_range

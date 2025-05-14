@@ -1,12 +1,14 @@
 from typing import TypedDict
 from graph_tool import Graph
 
+
 class PathsOnSubgraphResult(TypedDict):
     subgraph_routes_count: int
     original_routes_count: int
     ratio: float
 
-def paths_on_subgraph(subgraph : Graph, graph : Graph) -> PathsOnSubgraphResult:
+
+def paths_on_subgraph(subgraph: Graph, graph: Graph) -> PathsOnSubgraphResult:
     """
     Calculate the ratio of routes in a subgraph to the routes in the original graph.
     :param subgraph:
@@ -15,12 +17,13 @@ def paths_on_subgraph(subgraph : Graph, graph : Graph) -> PathsOnSubgraphResult:
     """
     from graph_tool.util import find_vertex
     subgraph_routes = set()
-    for v in subgraph.vertices(): subgraph_routes.update(subgraph.vp.routes[v])
+    for v in subgraph.vertices():
+        subgraph_routes.update(subgraph.vp.routes[v])
     original_routes_count = len(graph.vp.routes[
         list(find_vertex(graph, graph.vp.position_in_route, 1))[0]
-                                ])
+    ])
     return {
         "subgraph_routes_count": len(subgraph_routes),
         "original_routes_count": original_routes_count,
-        "ratio": len(subgraph_routes)/original_routes_count
+        "ratio": len(subgraph_routes) / original_routes_count
     }
