@@ -11,7 +11,7 @@ def main():
             "description": "Gather data into a CSV file"
         },
         "hBackbone": {
-            "launch": ("ip_analysis_tool.hBackbone", "main"),
+            "launch": ("ip_analysis_tool.h_backbone", "main"),
             "description": "Find the hBackbone of a network"
         },
         "k_core": {
