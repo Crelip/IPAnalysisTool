@@ -1,12 +1,23 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+import os, sys
+
+conda_prefix = os.environ.get('CONDA_PREFIX', sys.prefix)
+libdir = os.path.join(conda_prefix, 'lib')
+
+binaries = []
+for fname in ('libssl.so.3', 'libcrypto.so.3'):
+    p = os.path.join(libdir, fname)
+    if os.path.exists(p):
+        binaries.append((p, '.'))
+
 from PyInstaller.utils.hooks import collect_data_files
 datas = collect_data_files('mpl_toolkits')
 
 a = Analysis(
     ['ip_analysis_tool/ip_analysis_tool.py'],
     pathex=[],
-    binaries=[],
+    binaries=binaries,
     datas=datas,
     hiddenimports=[
         'graph_tool.centrality.libgraph_tool_centrality',
@@ -23,7 +34,11 @@ a = Analysis(
         'graph_tool.topology.libgraph_tool_topology',
         'graph_tool.util.libgraph_tool_util',
         'scipy._lib.array_api_compat.numpy.fft',
-        'scipy.special._special_ufuncs'
+        'scipy.special._special_ufuncs',
+        'ip_analysis_tool.caching.graph_cache',
+        'ip_analysis_tool.time_series_analysis',
+        'ip_analysis_tool.h_backbone',
+        'ip_analysis_tool.k_core'
     ],
     hookspath=[],
     hooksconfig={},
@@ -39,7 +54,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='IPAnalysisTool',
+    name='ip_analysis_tool',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
