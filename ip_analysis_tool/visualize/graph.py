@@ -1,29 +1,12 @@
 from graph_tool import Graph, GraphView, VertexPropertyMap
 
-def get_color_hops(g: Graph) -> VertexPropertyMap:
-    """
-    Assigns a color to each vertex based on its hop distance from the root vertex.
-    :param g: The graph to visualize.
-    :return: VertexPropertyMap with colors for each vertex.
-    """
-    import matplotlib.cm as cm
-    colormap = cm.viridis
-    color_map = g.new_vertex_property("vector<double>")
-    for v in g.vertices():
-        norm_val = g.vp.hop_distance[v] / 40.0
-        color_map[v] = colormap(norm_val)
-    return color_map
-
 def visualize_graph(
         g: Graph,
         name: str,
         prop: str = "ip",
-        color_hops = False,
         output_size: tuple = (10000, 10000),
 ):
     from graph_tool.all import graph_draw, sfdp_layout
-    if color_hops:
-        color_map = get_color_hops(g)
     graph_draw(
             g,
             sfdp_layout(g),
@@ -33,7 +16,7 @@ def visualize_graph(
             vertex_size=6,
             edge_pen_width=2.0,
             bg_color=[1,1,1,1],
-            vertex_fill_color=color_map if color_hops else (1, 0, 0, .5),
+            vertex_fill_color=(1, 0, 0, .5),
             output=f"{name}"
                   )
 
@@ -41,7 +24,6 @@ def visualize_graph_map(
         g: Graph,
         name: str = None,
         geo_data = None,
-        color_hops = False,
         show = True,
         save = True,
         directed = False,
@@ -68,11 +50,8 @@ def visualize_graph_map(
         else:
             vfilt[v] = False
     g.set_vertex_filter(vfilt)
-    if color_hops:
-        color_map = get_color_hops(g)
 
     pos = group_vector_property([lon, lat])
-
     m = Basemap(
         projection="merc",
         resolution="i",
@@ -88,31 +67,42 @@ def visualize_graph_map(
                 pos=pos.t(lambda x: m(*x)),
                 edge_color=(.1, .1, .1, .1),
                 mplfig=ax,
-                vertex_fill_color=color_map if color_hops else (1, 0, 0, .5),
+                vertex_fill_color=(1, 0, 0, .5),
                    )
 
     #a.fit_view()
     a.set_zorder(10)
     plt.tight_layout()
+    if save:
+        fig.savefig(f"{name}", dpi=1200, bbox_inches='tight')
+        print("Saved picture to", f"{name}")
     if show: plt.show()
-    if save: fig.savefig(f"{name}", dpi=1200, bbox_inches='tight')
 
 def main(args = None):
     from argparse import ArgumentParser
     parser = ArgumentParser()
+    parser.add_argument("-d", "--date", help="Date of network graph to visualize.", required=True)
+    parser.add_argument(
+        "-i",
+        "--interval",
+        help="Choose the interval of dates to analyze. Default is WEEK",
+        default="WEEK")
     parser.add_argument("-n", "--name", help="Name of the graph")
     parser.add_argument("-p", "--prop", help="Property to visualize")
-    parser.add_argument("-c", "--color_hops", help="Color hops", action="store_true")
     parser.add_argument("-m", "--map", help="Visualize world map", action="store_true")
-    parser.add_argument("-s", "--show", help="Show graph", action="store_true")
-    parser.add_argument("-o", "--output", help="Output graph file", action="store_true")
+    parser.add_argument("-s", "--show", help="Show graph directly", action="store_true")
     args = parser.parse_args(args)
     from ip_analysis_tool.util.graph_getter import get_graph_by_date
-    g = get_graph_by_date(args.graph)
+    from ip_analysis_tool.util.date_util import get_date_object
+    from ip_analysis_tool.enums import TimeInterval
+    g = get_graph_by_date(
+        get_date_object(args.date),
+        time_interval=TimeInterval[args.interval.upper()]
+    )
     if args.map:
-        visualize_graph_map(g, args.name, color_hops=args.color_hops, show=args.show, save=args.output)
+        visualize_graph_map(g, name=args.name, show=args.show, save=True)
     else:
-        visualize_graph(g, args.name, prop=args.prop, color_hops=args.color_hops)
+        visualize_graph(g, args.name, prop=args.prop)
 
 if __name__ == "__main__":
     main()

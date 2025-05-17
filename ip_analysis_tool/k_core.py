@@ -92,7 +92,7 @@ def get_k_core_metadata(k_core_data: KCoreDecompositionResult) -> dict:
         k = k_core_data["k_core_decomposition"][v]
         groups[k].append(k_core_data["graph"].vp.ip[v])
     return {
-        "date": loads(k_core_data.gp.metadata)["date"],
+        "date": loads(k_core_data["graph"].gp.metadata)["date"],
         "max_k": k_core_data["max_k"],
         "decomposition": [
             {
@@ -107,6 +107,7 @@ def get_k_core_metadata(k_core_data: KCoreDecompositionResult) -> dict:
 def main(args=None):
     from argparse import ArgumentParser
     from json import dumps
+    from .enums import TimeInterval
     parser = ArgumentParser()
     parser.add_argument(
         "-d",
@@ -122,13 +123,15 @@ def main(args=None):
         "--weighted_edges",
         action="store_true",
         help="Use graphs weighted edges.")
-
     # Output specifiers
     parser.add_argument(
         "-s",
         "--visualize",
         action="store_true",
         help="Visualize the k-core decomposition.")
+    parser.add_argument(
+        "-k",
+        help="K for which the k-core should be returned. If not specified, the maximum k-core will be returned.")
     parser.add_argument(
         "-m",
         "--map_visualize",
@@ -139,7 +142,7 @@ def main(args=None):
         "--output",
         type=str,
         metavar="FILE",
-        help="Output the k-core decomposition results (excluding the graph) to a file.")
+        help="Output the k-core decomposition results (excluding the graph) to a JSON file.")
     parser.add_argument(
         "-p",
         "--print",
@@ -151,28 +154,33 @@ def main(args=None):
         type=str,
         metavar="FILE",
         help="Output the resulting graph in the form of a .gt file.")
+    parser.add_argument(
+        "-n",
+        "--image_name",
+        type=str,
+        metavar="FILE",
+        help="Name of the resulting image (if visualizing)."
+    )
     args = parser.parse_args(args)
     data = k_core_decomposition(
         get_graph_by_date(
             args.date,
             weighted_edges=args.weighted_edges,
-            time_interval=args.interval))
+            time_interval=TimeInterval[args.interval]))
     if args.visualize:
-        from .visualize import visualize_graph
-        visualize_graph(data["graph"],
-                        f"k-core-{get_date_string(data['date'])}")
+        from .visualize.graph import visualize_graph
+        visualize_graph(get_k_core(data, int(data["max_k"]) if not args.k else int(args.k)),
+                        args.image_name)
     if args.map_visualize:
-        from .visualize import visualize_graph_world
-        visualize_graph_world(data["graph"],
-                              f"k-core-{get_date_string(data['date'])}")
+        from .visualize.graph import visualize_graph_map
+        visualize_graph_map(get_k_core(data, int(data["max_k"]) if not args.k else int(args.k)),
+                              args.image_name, show=False)
     if args.output:
-        with open(args.output[0], "w") as f:
-            f.write(dumps(data, indent=2))
+        with open(args.output, "w") as f:
+            f.write(dumps(get_k_core_metadata(data), indent=2))
     if args.graph:
-        filtered_graph = get_k_core(data["graph"], data["max_k"])
+        filtered_graph = get_k_core(data, int(data["max_k"]) if not args.k else int(args.k))
         filtered_graph.save(f"{args.graph}.gt")
-    if args.print:
-        print(data)
 
 
 if __name__ == "__main__":

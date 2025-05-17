@@ -17,6 +17,10 @@ def main():
         "k_core": {
             "launch": ("ip_analysis_tool.k_core", "main"),
             "description": "Find the k-core of a network"
+        },
+        "visualize": {
+            "launch": ("ip_analysis_tool.visualize.graph", "main"),
+            "description": "Visualize a network graph from a given time"
         }
     }
 

@@ -1,7 +1,7 @@
 from graph_tool import Graph, load_graph
 import os
 import datetime
-from .date_util import get_parent_week, get_parent_interval
+from .date_util import get_parent_week, get_parent_interval, get_date_string
 from ..enums import TimeInterval
 
 def get_graph_by_date(date: datetime.date = None, weighted_edges = False, time_interval : TimeInterval = TimeInterval.WEEK) -> Graph:
@@ -21,8 +21,12 @@ def get_graph_by_date(date: datetime.date = None, weighted_edges = False, time_i
             date = get_date_object(date)
         except:
             print("Invalid date format.")
-    input_file : str = os.path.expanduser(f'''~/.cache/IPAnalysisTool/graphs/{str(time_interval).lower()}/{'base' if not weighted_edges else 'weighted'}/{datetime.datetime.strftime(get_parent_interval(date, time_interval=time_interval)[0], "%Y-%m-%d")}.gt''')
-    return load_graph(input_file)
+    input_file : str = os.path.expanduser(f'''~/.cache/IPAnalysisTool/graphs/{str(time_interval).lower()}/{'base' if not weighted_edges else 'weighted'}/{get_date_string(get_parent_interval(date, time_interval=time_interval)[0])}.gt''')
+    try:
+        result = load_graph(input_file)
+        return result
+    except:
+        print("Requested graph could not be loaded.")
 
 def get_all_graph_dates(weighted_edges = False, time_interval : TimeInterval = TimeInterval.WEEK) -> list:
     """
