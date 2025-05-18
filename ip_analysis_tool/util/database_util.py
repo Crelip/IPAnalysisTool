@@ -18,6 +18,8 @@ def connect_to_remote_db() -> tuple:
     except:
         from .setup_util import setup_database_login
         setup_database_login()
+        with open(config_folder + "/config.yml", "r") as f:
+            config = yaml.safe_load(f)
 
     try:
         rem_conn = psycopg2.connect(

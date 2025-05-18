@@ -6,6 +6,14 @@ def visualize_graph(
         prop: str = "ip",
         output_size: tuple = (10000, 10000),
 ):
+    """
+    Visualizes the graph on a plain background. The result is output to a file.
+    :param g: Input graph.
+    :param name: Filename of the output picture.
+    :param prop: What property to show within nodes. Defaults to "ip".
+    :param output_size: Resolution of the output picture as a tuple (width, height).
+    :return:
+    """
     from graph_tool.all import graph_draw, sfdp_layout
     graph_draw(
             g,
@@ -23,11 +31,21 @@ def visualize_graph(
 def visualize_graph_map(
         g: Graph,
         name: str = None,
-        geo_data = None,
-        show = True,
-        save = True,
-        directed = False,
+        geo_data: dict = None,
+        show: bool = True,
+        save: bool = True,
+        directed: bool = False,
 ):
+    """
+    Visualizes the graph on a map background. The result is output to a file.
+    :param g: Input graph.
+    :param name: Filename of the output picture.
+    :param geo_data: An optional dict containing geographic data for IP addresses. If none, it uses ip_analysis_tool.util.geo_data_util's get_geo_data() to gather the relevant data.
+    :param show: Whether to directly show the resulting picture. Defaults to True.
+    :param save: Whether to save the resulting picture. Defaults to True.
+    :param directed: Whether to show arrows on the resulting picture. Defaults to False.
+    :return:
+    """
     g = GraphView(g, directed=directed)
     from graph_tool.all import graph_draw, group_vector_property
     from mpl_toolkits.basemap import Basemap
@@ -85,12 +103,11 @@ def main(args = None):
     parser.add_argument(
         "-i",
         "--interval",
-        help="Choose the interval of dates to analyze. Default is WEEK",
+        help="What interval to visualize the graph for. Possible values: WEEK, MONTH, YEAR, ALL, default: WEEK",
         default="WEEK")
-    parser.add_argument("-n", "--name", help="Name of the graph")
-    parser.add_argument("-p", "--prop", help="Property to visualize")
-    parser.add_argument("-m", "--map", help="Visualize world map", action="store_true")
-    parser.add_argument("-s", "--show", help="Show graph directly", action="store_true")
+    parser.add_argument("-n", "--name", help="Filename of the output picture.")
+    parser.add_argument("-m", "--map", help="Visualize on a map background.", action="store_true")
+    parser.add_argument("-s", "--show", help="Show graph directly, applies to map visualization only.", action="store_true")
     args = parser.parse_args(args)
     from ip_analysis_tool.util.graph_getter import get_graph_by_date
     from ip_analysis_tool.util.date_util import get_date_object
@@ -102,7 +119,7 @@ def main(args = None):
     if args.map:
         visualize_graph_map(g, name=args.name, show=args.show, save=True)
     else:
-        visualize_graph(g, args.name, prop=args.prop)
+        visualize_graph(g, args.name)
 
 if __name__ == "__main__":
     main()

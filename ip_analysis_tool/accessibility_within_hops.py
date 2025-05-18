@@ -76,29 +76,3 @@ def accessibility_within_hops_approx(
             record["IPs"] = ips
         distance_records.append(record)
     return DataFrame(distance_records)
-
-
-def main():
-    from argparse import ArgumentParser
-    from util.date_util import get_date_object
-    from util.graph_getter import get_graph_by_date
-    # Parse arguments
-    parser = ArgumentParser()
-    parser.add_argument(
-        "-d",
-        "--date",
-        help="Generates a graph for the week containing the given date.")
-    parser.add_argument("-o", "--output", help="Output file path.")
-    args = parser.parse_args()
-    if args.date:
-        print(
-            accessibility_within_hops(
-                get_graph_by_date(
-                    get_date_object("%Y-%m-%d"))))
-    else:
-        print("Please provide a date.")
-        exit(1)
-
-
-if __name__ == "__main__":
-    main()

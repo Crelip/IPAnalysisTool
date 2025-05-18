@@ -272,22 +272,3 @@ def visualize_chart_add_dual_line(data: DataFrame,
     fig.canvas.mpl_connect("scroll_event", zoom_fun)
     plt.legend()
     plt.show()
-
-def main(args = None):
-    from argparse import ArgumentParser
-    import pandas as pd
-    parser = ArgumentParser()
-    parser.add_argument("-p", "--parameter", help="Parameter to plot")
-    parser.add_argument("-pn", "--parameter_name", help="Name of the parameter to plot (will be shown in the rendered chart)")
-    parser.add_argument("-t", "--title", help="Title of the chart")
-    parser.add_argument("-i", "--input", type=str, metavar="FILE", help="Input file containing the data to plot")
-    parser.add_argument("-s", "--skip_undefined", help="Skip undefined values", action="store_true")
-    args = parser.parse_args(args)
-    data = pd.read_csv(args.input)
-    visualize_chart(data,
-                    args.parameter,
-                    args.title,
-                    y_label=args.parameter_name)
-
-if __name__ == "__main__":
-    main()

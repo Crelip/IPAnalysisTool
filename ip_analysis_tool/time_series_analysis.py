@@ -324,7 +324,7 @@ def main(args=None):
     parser.add_argument(
         "-i",
         "--interval",
-        help="Choose the interval of dates to analyze. Default is WEEK",
+        help="What intervals to split the data into. Possible values: WEEK, MONTH, YEAR, ALL, default: WEEK",
         default="WEEK")
     # Parameters to measure
     parser.add_argument(

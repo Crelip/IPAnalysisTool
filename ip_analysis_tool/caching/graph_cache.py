@@ -288,15 +288,15 @@ def main(args = None):
     from argparse import ArgumentParser
     parser = ArgumentParser()
     parser.add_argument("-r", "--range", nargs=2,
-                        help="Generates a graph only for the aforementioned time range which begins with the interval containing the first given date and ends with the interval containing the second given date.")
+                        help="Generates graphs only for the time range which begins with the interval containing the first given date and ends with the interval containing the second given date. Format is YYYY-MM-DD.")
     parser.add_argument("-t", "--time",
-                        help="Generates a graph only for the aforementioned time interval which includes the given date.")
+                        help="Generates a graph only for the aforementioned time interval which includes the given date. Format is YYYY-MM-DD.")
     parser.add_argument("-i", "--interval", default="WEEK",
-                        help="""Splits the data among time intervals.
-                        POSSIBLE VALUES: WEEK, MONTH, YEAR, ALL, default: WEEK
+                        help="""What intervals to split the data into.
+                        Possible values: WEEK, MONTH, YEAR, ALL, default: WEEK
                         """)
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
-    parser.add_argument("-w", "--weighted_edges", action="store_true", help="Use edge weights")
+    parser.add_argument("-w", "--weighted_edges", action="store_true", help="Generate graphs with weighted edges, results in significantly smaller graphs.")
 
     args = parser.parse_args(args)
 

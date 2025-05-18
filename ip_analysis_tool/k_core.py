@@ -128,10 +128,10 @@ def main(args=None):
         "-s",
         "--visualize",
         action="store_true",
-        help="Visualize the k-core decomposition.")
+        help="Visualize the k-core decomposition on a plain background.")
     parser.add_argument(
         "-k",
-        help="K for which the k-core should be returned. If not specified, the maximum k-core will be returned.")
+        help="K for which the k-core should be returned/visualized. If not specified, the maximum k-core will be returned/visualized.")
     parser.add_argument(
         "-m",
         "--map_visualize",
@@ -143,11 +143,6 @@ def main(args=None):
         type=str,
         metavar="FILE",
         help="Output the k-core decomposition results (excluding the graph) to a JSON file.")
-    parser.add_argument(
-        "-p",
-        "--print",
-        action="store_true",
-        help="Print the k-core decomposition result (excluding the graph) on stdout.")
     parser.add_argument(
         "-g",
         "--graph",
