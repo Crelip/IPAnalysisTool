@@ -31,6 +31,10 @@ def connect_to_remote_db() -> tuple:
 
 # Gets the earliest and latest date in the database
 def get_database_range() -> Tuple[datetime.date, datetime.date]:
+    """
+    Returns the earliest and latest date found in the remote database.
+    :return: The earliest and latest date found in the remote database.
+    """
     # Database connection setup
     rem_conn, rem_cur = connect_to_remote_db()
 

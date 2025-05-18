@@ -13,7 +13,7 @@ def linear_regression(
     :param data: The time series data to analyze.
     :param x_characteristic: The column name of the data to analyze for the x-axis.
     :param y_characteristic: The column name of the data to analyze for the y-axis.
-    :return: DataFrame with original values + trend column.
+    :return: DataFrame with original values with a new 'fit' column.
     """
     from sklearn.linear_model import LinearRegression
 
@@ -48,7 +48,7 @@ def gaussian_fit(
     Perform Gaussian fit on time series data.
     :param data: The time series data to analyze.
     :param y_characteristic: The column name of the data to analyze.
-    :return: DataFrame with original values and smoothed values.
+    :return: DataFrame with original values with a new 'gaussian_fit' column and mean and standard deviation values as a float.
     """
     import math
     output = data.copy()
@@ -81,9 +81,7 @@ def poisson_fit(
     :param data: The DataFrame containing your series.
     :param x_characteristic: Name of the column holding the discrete x‐values (e.g. hop distance).
     :param y_characteristic: Name of the column holding counts at each x.
-    :return: Either
-        - output_df with a new 'poisson_fit' column, or
-        - (output_df, lambda) if return_lambda=True.
+    :return: DataFrame with original values with a new 'poisson_fit' column and mean and standard deviation values as a float.
     """
     import math
     output = data.copy()
@@ -103,122 +101,3 @@ def poisson_fit(
 
     output["poisson_fit"] = poisson
     return output, mean, math.sqrt(mean)
-
-
-methods_map = {
-    "linreg": {
-        "name": "Linear Regression",
-        "method": linear_regression,
-    },
-    "gaussian": {
-        "name": "Gaussian Fit",
-        "method": gaussian_fit,
-    },
-    "poisson": {
-        "name": "Poisson Fit",
-        "method": poisson_fit,
-    },
-}
-
-
-def trend_identification(
-        filename: str,
-        y_characteristic: str,
-        x_characteristic: str = None,
-        method: str = "linreg",
-        impute: bool = False):
-    data = pd.read_csv(filename)
-    data["date"] = pd.to_datetime(data["date"])
-    # Clean/impute missing weeks
-    if impute:
-       # Find rows where numVertices is 0
-        zero_rows = data['numVertices'] == 0
-        # Replace all values in those rows with NaN
-        data.loc[zero_rows, :] = np.nan
-        # Forward fill to impute missing values
-        data.ffill(inplace=True)
-    else:
-        data = data[data['numVertices'] != 0].copy()
-
-    entry = methods_map.get(method)
-    if entry is None:
-        raise ValueError(f"Invalid method: {method}")
-
-    result = entry["method"](
-        data,
-        x_characteristic=x_characteristic,
-        y_characteristic=y_characteristic
-    ) if method == "linreg" else (
-        entry["method"](
-            data,
-            x_characteristic=x_characteristic,
-            y_characteristic=y_characteristic
-        )[0]
-    )
-
-
-def main():
-    from argparse import ArgumentParser
-    parser = ArgumentParser()
-    parser.add_argument(
-        "-f",
-        "--filename",
-        help="Generates data from the file containing the given filename.")
-    parser.add_argument(
-        "-v",
-        "--verbose",
-        help="Verbose output.",
-        action="store_true")
-    parser.add_argument(
-        "-m",
-        "--method",
-        help="Method to use to identify trends")
-    parser.add_argument(
-        "-i",
-        "--impute",
-        help="Impute gaps",
-        action="store_true")
-    parser.add_argument(
-        "-p",
-        "--plot",
-        help="Plot trends",
-        action="store_true")
-    parser.add_argument(
-        "-x",
-        "--x_characteristic",
-        help="X characteristic to use for trend identification")
-    parser.add_argument(
-        "-y",
-        "--y_characteristic",
-        help="Y characteristic to use for trend identification")
-    parser.add_argument("-t", "--title", help="Title of the plot")
-    parser.add_argument("-o", "--output", help="Output filename")
-    parser.add_argument(
-        "-s",
-        "--save",
-        help="Save the output to a file",
-        action="store_true")
-    parser.add_argument()
-    args = parser.parse_args()
-    data = trend_identification(
-        args.filename,
-        args.y_characteristic,
-        args.x_characteristic,
-        args.method,
-        args.impute)
-
-    if args.plot():
-        from ip_analysis_tool.visualize.chart import visualize_chart_add_line
-        visualize_chart_add_line(
-            data=data,
-            x_characteristic=args.x_characteristic,
-            y_characteristic=args.y_characteristic,
-            trend_characteristic="fit",
-            title=args.title,
-            filename=args.output if args.output else "",
-            show=True,
-            save=args.save)
-
-
-if __name__ == "__main__":
-    main()

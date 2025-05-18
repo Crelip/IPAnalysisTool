@@ -60,9 +60,9 @@ def k_core_decomposition(g: Graph) -> KCoreDecompositionResult:
 def get_k_core(k_core_data: KCoreDecompositionResult, k: int):
     """
     Get the k-core subgraph of the given graph for a given k.
-    :param k_core_data:
-    :param k:
-    :return:
+    :param k_core_data: KCoreDecompositionResult of the k-core decomposition.
+    :param k: K for which to get the k-core subgraph.
+    :return: K-core subgraph of the given graph based on the given k.
     """
     from graph_tool import GraphView
     vfilt = k_core_data["graph"].new_vertex_property("bool")
@@ -74,8 +74,8 @@ def get_k_core(k_core_data: KCoreDecompositionResult, k: int):
 def get_max_k_core(k_core_data: KCoreDecompositionResult):
     """
     Get the maximum k-core subgraph of the given graph.
-    :param k_core_data:
-    :return:
+    :param k_core_data: KCoreDecompositionResult of the k-core decomposition.
+    :return: Maximum k-core subgraph of the given graph.
     """
     return get_k_core(k_core_data, k_core_data["max_k"])
 
@@ -83,8 +83,8 @@ def get_max_k_core(k_core_data: KCoreDecompositionResult):
 def get_k_core_metadata(k_core_data: KCoreDecompositionResult) -> dict:
     """
     Get the metadata for the k-core decomposition in a dict form.
-    :param k_core_data:
-    :return:
+    :param k_core_data: KCoreDecompositionResult of the k-core decomposition.
+    :return: Metadata of the decomposition as a dict.
     """
     from json import loads
     groups = defaultdict(list)

@@ -1,19 +1,26 @@
 import graph_tool.all as gt
 from datetime import date
+from graph_tool import Edge, VertexPropertyMap
 
 
-def edge_repr(e, ip_prop):
+def edge_repr(e: Edge, ip_prop: VertexPropertyMap):
+    """
+    Returns a sorted tuple of a given vertex property from the starting and ending vertex of a given edge.
+    :param e: Input edge
+    :param ip_prop: Vertex property of the starting edge.
+    :return: A sorted tuple of a given vertex property from the starting and ending vertex of a given edge.
+    """
     src = ip_prop[e.source()]
     tgt = ip_prop[e.target()]
     return tuple(sorted([src, tgt]))
 
 
-def compare_graphs_jaccard(g1: gt.Graph, g2: gt.Graph):
+def compare_graphs_jaccard(g1: gt.Graph, g2: gt.Graph) -> dict:
     """
     Compare two graphs using the Jaccard index for edges and vertices.
     :param g1: First graph to compare.
     :param g2: Second graph to compare.
-    :return:
+    :return: A comparison rundown as a dictionary.
     """
     # Apply Jaccard index for edges
     edges1 = {edge_repr(e, g1.vp.ip) for e in g1.edges()}

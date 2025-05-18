@@ -1,4 +1,8 @@
 def main():
+    """
+    An entry point for the CLI program.
+    :return:
+    """
     import sys
     from importlib import import_module
     commands = {
@@ -9,10 +13,6 @@ def main():
         "time_series_analysis": {
             "launch": ("ip_analysis_tool.time_series_analysis", "main"),
             "description": "Gather data into a CSV file"
-        },
-        "hBackbone": {
-            "launch": ("ip_analysis_tool.h_backbone", "main"),
-            "description": "Find the hBackbone of a network"
         },
         "k_core": {
             "launch": ("ip_analysis_tool.k_core", "main"),

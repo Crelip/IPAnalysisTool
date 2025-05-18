@@ -8,16 +8,22 @@ from sortedcontainers import SortedSet
 from ..enums import TimeInterval
 import yaml
 
-def is_nondecreasing_array(arr):
+def is_nondecreasing_array(arr) -> bool:
+    """
+    Determine if an array is non-decreasing.
+    :param arr: Input array.
+    :return: Whether the array is non-decreasing.
+    """
     size = len(arr)
     for i in range(1, size):
         if arr[i] < arr[i - 1]:
             return False
     return True
 
-def load_starting_address():
+def load_starting_address() -> str:
     """
     Loads the starting address from the config file. If the starting address isn't defined, 'localhost' is returned.
+    :return: Starting address as a string.
     """
     config_folder = os.path.expanduser("~/.config/IPAnalysisTool")
     if not os.path.exists(config_folder):
@@ -34,6 +40,17 @@ def load_starting_address():
 
 # Generates a graph based on all data from start date to end date
 def generate_interval_data(start, end, rem_cur, data_folder : str, verbose : bool, weighted_edges : bool = False, time_interval : TimeInterval = TimeInterval.WEEK):
+    """
+    Generate graphs from the database data for a given interval. Used by generate_data() from the same module.
+    :param start: Date from which to start generating the graphs.
+    :param end: Date to which to end generating the data.
+    :param rem_cur: Database cursor used to retrieve data from the database.
+    :param data_folder: Folder where to store the graphs. Default is ~/.cache/IPAnalysisTool/graphs/
+    :param verbose: Verbose output.
+    :param weighted_edges: Whether to generate weighted edges.
+    :param time_interval: Granularity of the time intervals for which the data is going to be generated.
+    :return:
+    """
 
     def add_node(g, address, times, i, endpoint):
         """

@@ -1,5 +1,10 @@
 from typing import Iterable
 def get_geo_data(ips: Iterable[str]) -> dict[str, dict]:
+    """
+    Gets the geographic data for given IP addresses.
+    :param ips: A list of IP addresses to fetch data for.
+    :return: Geographic data for the given IP addresses.
+    """
     from os.path import expanduser
     from os import scandir
     try:

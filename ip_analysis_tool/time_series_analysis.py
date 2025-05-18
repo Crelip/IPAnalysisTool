@@ -163,11 +163,11 @@ def time_series_analysis(
     :param verbose: Display verbose output on stdout.
     :param date_range: A range of dates to analyze. The format is YYYY-MM-DD YYYY-MM-DD. If not specified, the whole date range will be used.
     :param max_threads: The maximum number of threads to use for processing. Default is 1. Can be quite memory intensive.
-    :param weighted_edges:
-    :param time_interval:
-    :param max_k_core_data:
-    :param max_distance_data:
-    :param diameter:
+    :param weighted_edges: Whether to use graphs with weighted edges. This will add additional data to the output, such as weighted diameter, but the accuracy is questionable given the much lower amount of the data.
+    :param time_interval: Time granularity for data processing.
+    :param max_k_core_data: The maximum number of kcore decomposition results to return.
+    :param max_distance_data: The maximum number of distance data points to return.
+    :param diameter: Whether to calculate diameter metrics. Default is False.
     :return:
     """
     from .util.date_util import iterate_range, get_date_string, get_date_object, get_cache_date_range

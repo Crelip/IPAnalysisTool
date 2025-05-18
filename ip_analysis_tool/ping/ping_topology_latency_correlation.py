@@ -3,10 +3,10 @@ from ..enums import TimeInterval
 
 def ping_topology_latency_correlation(time_interval: TimeInterval, verbose : bool = False) -> pd.DataFrame:
     """
-    Simple function for testing the correlation between the latency data from the database and the latency data from the topology. It collects data for all endpoints across the entire data range split into intervals.
+    Simple function for testing the correlation between the ping latency data from the database and the topology latency data from the topology. It collects data for all endpoints across the entire data range split into intervals.
     :param time_interval: The interval to use for the data collection.
     :param verbose: If true, prints info on the console. Default is False.
-    :return:
+    :return: Dataframe containing the average latency from topology, ping and their ratios for each date.
     """
     from ..util.date_util import get_cache_date_range
     from ..util.graph_getter import get_graph_by_date

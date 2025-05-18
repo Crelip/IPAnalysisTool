@@ -6,6 +6,11 @@ from .visualize.graph import visualize_graph_map
 
 
 def add_bridge(g: Graph):
+    """
+    Adds the bridge property to the graph
+    :param g: Input graph.
+    :return: Graph with bridge edge property added.
+    """
     from graph_tool.centrality import betweenness
     bridge = g.new_edge_property("double")
     g.edge_properties["bridge"] = bridge

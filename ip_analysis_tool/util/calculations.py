@@ -2,6 +2,12 @@ from math import floor
 from graph_tool import Graph, VertexPropertyMap
 
 def get_h_index(g : Graph, values : VertexPropertyMap) -> int:
+    """
+    Returns the highest integer h such that at least h vertices have a given vertex property set to at least h.
+    :param g: Input graph.
+    :param values: The VertexPropertyMap to use, should have numbers as values.
+    :return: Highest integer h. (int)
+    """
     n = g.num_edges()
     freq = [0] * (n + 1)
     for item in g.edges():

@@ -11,6 +11,7 @@ def setup_database_login():
     db_login['database_user'] = input('Enter the user name: ')
     db_login['database_password'] = input('Enter the password: ')
     db_login['database_name'] = input('Enter the database name: ')
+    db_login['starting_address'] = input('Enter the starting IP address: ')
     # Put the login details into a YAML file
     with open(expanduser("~/.config/IPAnalysisTool/config.yml"), "w") as f:
         dump(db_login, f)

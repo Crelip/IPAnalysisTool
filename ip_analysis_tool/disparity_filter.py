@@ -1,6 +1,6 @@
+from typing import Tuple
 from graph_tool import Graph, GraphView
 from scipy.stats import percentileofscore
-from .util.graph_manipulation import remove_reciprocal_edges
 
 
 def disparity_integral(x, k):
@@ -14,11 +14,11 @@ def get_disparity_significance(norm_weight, degree):
                   degree) - disparity_integral(0.0, degree)))
 
 
-def disparity_compute(g: Graph):
+def disparity_compute(g: Graph) -> Tuple[Graph, dict]:
     """
     Compute the disparity measures of a graph.
-    :param g:
-    :return:
+    :param g: Input graph.
+    :return: A tuple of the graph and the disparity measures.
     """
     if g.num_edges() == 0:
         return Graph(), {}
@@ -66,12 +66,12 @@ def disparity_compute(g: Graph):
     return gv, alpha_measures
 
 
-def disparity_filter(g: Graph, percentile_threshold=50.0):
+def disparity_filter(g: Graph, percentile_threshold: float = 50.0) -> Graph:
     """
     Filter a graph based on the disparity filter.
     :param g: Input graph.
-    :param percentile_threshold:
-    :return:
+    :param percentile_threshold: The threshold for the percentile of edges. Default is 50.
+    :return: Filtered graph.
     """
     if g.num_edges() == 0:
         return Graph()
