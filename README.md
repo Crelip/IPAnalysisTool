@@ -18,6 +18,19 @@ conda activate ip_analysis_tool
 python -m ip_analysis_tool/ip_analysis_tool.py
 ```
 6. If the tool launches successfully, you're all set up!
+
+## Launching jupyter
+1. Open a terminal and navigate to the repository
+2. Activate the environment
+```bash
+conda activate ip_analysis_tool
+```
+3. Launch Jupyter by typing
+```bash
+jupyter notebook --notebook-dir .
+```
+4. A browser will open, where you can explore one of the `.ipynb` files in `notebooks/`
+
 ## Building the package
 - This is useful for distributing the tool to others, without the hassle of installing Conda and other dependencies, it's a single standalone executable
 1. Open a terminal and navigate to the repository
